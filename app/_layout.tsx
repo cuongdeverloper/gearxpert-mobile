@@ -1,24 +1,45 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+// app/_layout.tsx
+import { Stack, useRootNavigationState, useRouter, useSegments } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { getToken } from '../src/shared/utils/storage';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  const segments = useSegments();
+  const router = useRouter();
+  
+  const rootNavigationState = useRootNavigationState();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      setIsAuthChecked(false);
+      try {
+        const token = await getToken();
+        setIsAuthenticated(!!token);
+      } finally {
+        setIsAuthChecked(true);
+      }
+    };
+    checkAuth();
+  }, [segments.join('/')]);
+
+  useEffect(() => {
+    if (!rootNavigationState?.key) return;
+
+    if (!isAuthChecked) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace('/home');
+    }
+  }, [isAuthenticated, segments, rootNavigationState?.key, isAuthChecked]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }} />
   );
 }
