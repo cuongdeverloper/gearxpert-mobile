@@ -2,6 +2,7 @@
 import { Stack, useRootNavigationState, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { getToken } from '../src/shared/utils/storage';
+import { FavoriteProvider } from '../src/context/FavoriteContext';
 
 export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,11 +36,13 @@ export default function RootLayout() {
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
     } else if (isAuthenticated && inAuthGroup) {
-      router.replace('/home');
+      router.replace('/(tabs)/home');
     }
   }, [isAuthenticated, segments, rootNavigationState?.key, isAuthChecked]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }} />
+    <FavoriteProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </FavoriteProvider>
   );
 }

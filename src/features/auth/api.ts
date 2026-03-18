@@ -22,3 +22,24 @@ export const ApiLogin = async (email: string, password: string) => {
     }
   }
 };
+
+export const ApiGetCurrentUser = async (token: string) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/auths/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      return error.response.data;
+    } else {
+      console.error("Lỗi Network:", error.message);
+      return {
+        errorCode: -1,
+        message: "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng!",
+      };
+    }
+  }
+};
