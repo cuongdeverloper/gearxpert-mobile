@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomNav from '../../src/components/BottomNav';
+import DeviceCard from '../../src/components/DeviceCard';
 
 const { width } = Dimensions.get('window');
 
@@ -18,7 +19,9 @@ const CATEGORIES = [
   { name: 'Camera', id: 'CAMERA', icon: 'camera-outline' },
   { name: 'Lighting', id: 'LIGHTING', icon: 'bulb-outline' },
   { name: 'Audio', id: 'AUDIO', icon: 'mic-outline' },
-  { name: 'Accessory', id: 'ACCESSORY', icon: 'construct-outline' },
+  { name: 'Office', id: 'OFFICE', icon: 'briefcase-outline' },
+  { name: 'Gaming', id: 'GAMING', icon: 'game-controller-outline' },
+  { name: 'Accessories', id: 'ACCESSORY', icon: 'construct-outline' },
   { name: 'Drone', id: 'DRONE', icon: 'airplane-outline' },
   { name: 'Other', id: 'OTHER', icon: 'apps-outline' },
 ];
@@ -167,48 +170,15 @@ export default function Homepage() {
         </View>
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trendingList} snapToInterval={width * 0.75 + 20} decelerationRate="fast">
-          {trendingGear.map((item) => {
-            const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.rentPrice.perDay);
-            const imageUrl = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32';
-            
-            return (
-              <TouchableOpacity key={item._id} activeOpacity={0.9} style={styles.premiumCard}>
-                 <View style={styles.premiumCardInner}>
-                    <View style={styles.premiumImageContainer}>
-                        <Image source={{ uri: imageUrl }} style={styles.premiumImage} resizeMode="cover" />
-                        <View style={styles.premiumRatingBadge}>
-                            <Ionicons name="star" size={14} color="#F59E0B" />
-                            <Text style={styles.premiumRatingText}>{item.ratingAvg > 0 ? item.ratingAvg.toFixed(1) : 'New'}</Text>
-                        </View>
-                        <TouchableOpacity 
-                            style={styles.heartButton}
-                            onPress={() => toggleFavorite(item._id)}
-                        >
-                            <Ionicons 
-                                name={favoriteIds.includes(item._id) ? "heart" : "heart-outline"} 
-                                size={20} 
-                                color={favoriteIds.includes(item._id) ? "#EF4444" : "#0F172A"} 
-                            />
-                        </TouchableOpacity>
-                    </View>
-                    
-                    <View style={styles.premiumCardBody}>
-                        <Text style={styles.premiumCategoryText}>{item.category || 'GEAR'}</Text>
-                        <Text style={styles.premiumTitle} numberOfLines={1}>{item.name}</Text>
-                        <View style={styles.premiumFooter}>
-                            <View style={styles.priceContainer}>
-                                <Text style={styles.priceValue}>{formattedPrice}</Text>
-                                <Text style={styles.pricePeriod}>/day</Text>
-                            </View>
-                            <View style={styles.bookButton}>
-                               <Text style={styles.bookButtonText}>Book</Text>
-                            </View>
-                        </View>
-                    </View>
-                 </View>
-              </TouchableOpacity>
-            );
-          })}
+          {trendingGear.map((item) => (
+            <DeviceCard
+              key={item._id}
+              device={item}
+              variant="horizontal"
+              isFavorite={favoriteIds.includes(item._id)}
+              onFavoriteToggle={toggleFavorite}
+            />
+          ))}
         </ScrollView>
         
         {/* TOP BRANDS */}
@@ -507,112 +477,10 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: 20,
   },
-  premiumCard: {
-    width: width * 0.75,
-    backgroundColor: 'transparent',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  premiumCardInner: {
-    backgroundColor: '#1E293B', // Solid slate dark to prevent blur rendering bugs over images
-    borderRadius: 32,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    overflow: 'hidden',
-  },
-  premiumImageContainer: {
-    width: '100%',
-    height: 180,
-    backgroundColor: '#FFF', // Solid white to show transparent product images cleanly
-    borderRadius: 24,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  premiumImage: {
-    width: '100%',
-    height: '100%',
-  },
-  premiumRatingBadge: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 4,
-  },
-  premiumRatingText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFF',
-  },
-  heartButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  premiumCardBody: {
-    paddingTop: 16,
-    paddingHorizontal: 8,
-  },
-  premiumCategoryText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#94A3B8',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  premiumTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#F8FAFC',
-    marginBottom: 16,
-  },
-  premiumFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-  },
-  priceValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#22D3EE',
-  },
-  pricePeriod: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#94A3B8',
-    marginBottom: 3,
-    marginLeft: 2,
-  },
-  bookButton: {
-    backgroundColor: '#6366F1',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 16,
-  },
-  bookButtonText: {
-    color: '#FFF',
-    fontWeight: '700',
-    fontSize: 13,
-  },
+  // DeviceCard handles premium styles
+
+  // DeviceCard handles styles for premiumCard, premiumCardInner, etc.
+
   // === Dropdown Styles ===
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,

@@ -12,10 +12,11 @@ import { ApiGetUserFavorites } from '../../src/features/equipment/favoriteApi';
 import { useFavorites } from '../../src/context/FavoriteContext';
 import { getToken } from '../../src/shared/utils/storage';
 import BottomNav from '../../src/components/BottomNav';
+import DeviceCard from '../../src/components/DeviceCard';
 import { useFocusEffect } from 'expo-router';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48 - 12) / 2;
+// CARD_WIDTH moved to DeviceCard
 
 export default function FavoritesScreen() {
   const router = useRouter();
@@ -55,39 +56,14 @@ export default function FavoritesScreen() {
     await toggleFavorite(deviceId);
   };
 
-  const renderProductCard = ({ item }: { item: any }) => {
-    const imageUrl = Array.isArray(item.images) && item.images.length > 0
-      ? item.images[0]
-      : 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32';
-    const price = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.rentPrice?.perDay || 0);
-
-    return (
-      <TouchableOpacity style={styles.productCard} activeOpacity={0.85}>
-        <View style={styles.productImageContainer}>
-          <Image source={{ uri: imageUrl }} style={styles.productImage} resizeMode="cover" />
-          {item.ratingAvg > 0 && (
-            <View style={styles.ratingBadge}>
-              <Ionicons name="star" size={11} color="#F59E0B" />
-              <Text style={styles.ratingText}>{item.ratingAvg.toFixed(1)}</Text>
-            </View>
-          )}
-          <TouchableOpacity 
-            style={styles.heartBtn}
-            onPress={() => handleToggleFavorite(item._id)}
-          >
-            <Ionicons name="heart" size={16} color="#EF4444" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.productInfo}>
-          <Text style={styles.productCategory}>{item.category || 'GEAR'}</Text>
-          <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-          <View style={styles.productFooter}>
-            <Text style={styles.productPrice}>{price}<Text style={styles.perDay}>/day</Text></Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderProductCard = ({ item }: { item: any }) => (
+    <DeviceCard
+      device={item}
+      variant="grid"
+      isFavorite={true} // In favorites screen, it's always favorite
+      onFavoriteToggle={handleToggleFavorite}
+    />
+  );
 
   return (
     <View style={styles.container}>
@@ -186,44 +162,4 @@ const styles = StyleSheet.create({
   grid: { paddingHorizontal: 20, paddingBottom: 100 },
   row: { justifyContent: 'space-between', marginBottom: 12 },
 
-  // Product Card
-  productCard: {
-    width: CARD_WIDTH,
-    backgroundColor: '#1E293B',
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
-  },
-  productImageContainer: {
-    width: '100%', height: 150,
-    backgroundColor: '#FFF',
-    position: 'relative',
-  },
-  productImage: { width: '100%', height: '100%' },
-  ratingBadge: {
-    position: 'absolute', top: 8, left: 8,
-    flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12,
-  },
-  ratingText: { fontSize: 11, fontWeight: '700', color: '#FFF' },
-  heartBtn: {
-    position: 'absolute', top: 8, right: 8,
-    width: 30, height: 30, borderRadius: 15,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  productInfo: { padding: 12 },
-  productCategory: {
-    fontSize: 10, fontWeight: '700', color: '#22D3EE',
-    letterSpacing: 0.8, marginBottom: 4,
-  },
-  productName: {
-    fontSize: 13, fontWeight: '700', color: '#F1F5F9',
-    lineHeight: 18, marginBottom: 8,
-  },
-  productFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  productPrice: { fontSize: 15, fontWeight: '800', color: '#6366F1' },
-  perDay: { fontSize: 11, fontWeight: '400', color: '#64748B' },
 });

@@ -5,13 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef } from 'react';
 
-type TabId = 'home' | 'search' | 'scan' | 'calendar' | 'profile';
+type TabId = 'home' | 'search' | 'blog' | 'shops' | 'profile';
 
 const TABS: { id: TabId; icon: string; activeIcon: string; route: string }[] = [
   { id: 'home',     icon: 'home-outline',     activeIcon: 'home',     route: '/(tabs)/home' },
-  { id: 'scan',   icon: 'scan-outline',   activeIcon: 'scan',   route: '' },
-  { id: 'search',     icon: 'search-outline',     activeIcon: 'search',     route: '/(tabs)/products' },
-  { id: 'calendar', icon: 'calendar-outline', activeIcon: 'calendar', route: '/(tabs)/calendar' },
+  { id: 'blog',     icon: 'newspaper-outline', activeIcon: 'newspaper', route: '/(tabs)/blog' },
+  { id: 'search',   icon: 'search-outline',   activeIcon: 'search',   route: '/(tabs)/products' },
+  { id: 'shops',    icon: 'storefront-outline', activeIcon: 'storefront', route: '/(tabs)/shops' },
   { id: 'profile',  icon: 'person-outline',   activeIcon: 'person',   route: '/(tabs)/profile' },
 ];
 
@@ -63,7 +63,6 @@ export default function BottomNav({ activeTab }: BottomNavProps) {
     (TABS.find(t => t.route && pathname.startsWith(t.route))?.id || 'home');
 
   const handlePress = (tab: typeof TABS[number]) => {
-    if (!tab.route) return; // scan button — no navigation yet
     if (pathname !== tab.route) {
       router.push(tab.route as any);
     }

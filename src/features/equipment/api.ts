@@ -39,3 +39,30 @@ export const ApiGetDevices = async (paramsObj?: any) => {
     }
   }
 };
+
+export const ApiGetDeviceDetail = async (id: string) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/devices/${id}`);
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { errorCode: -1, message: "Network error" };
+  }
+};
+
+export const ApiGetDeviceAddons = async (id: string) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/devices/${id}/addons`);
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { errorCode: -1, message: "Network error" };
+  }
+};
+
+export const ApiGetRelatedDevices = async (id: string) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/devices/${id}/related`);
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { errorCode: -1, message: "Network error" };
+  }
+};

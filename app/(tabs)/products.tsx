@@ -10,16 +10,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiGetDevices } from '../../src/features/equipment/api';
 import { useFavorites } from '../../src/context/FavoriteContext';
 import BottomNav from '../../src/components/BottomNav';
+import DeviceCard from '../../src/components/DeviceCard';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48 - 12) / 2; // 2-col grid with padding
+// CARD_WIDTH moved to DeviceCard
 
 const CATEGORIES = [
   { name: 'All Gear', id: null, icon: 'grid-outline' },
   { name: 'Camera', id: 'CAMERA', icon: 'camera-outline' },
   { name: 'Lighting', id: 'LIGHTING', icon: 'bulb-outline' },
   { name: 'Audio', id: 'AUDIO', icon: 'mic-outline' },
-  { name: 'Accessory', id: 'ACCESSORY', icon: 'construct-outline' },
+  { name: 'Office', id: 'OFFICE', icon: 'briefcase-outline' },
+  { name: 'Gaming', id: 'GAMING', icon: 'game-controller-outline' },
+  { name: 'Accessories', id: 'ACCESSORY', icon: 'construct-outline' },
   { name: 'Drone', id: 'DRONE', icon: 'airplane-outline' },
   { name: 'Other', id: 'OTHER', icon: 'apps-outline' },
 ];
@@ -113,43 +116,14 @@ export default function ProductsScreen() {
     setFiltered(result);
   }, [devices, selectedCategory, searchQuery, sortBy]);
 
-  const renderProductCard = ({ item }: { item: any }) => {
-    const imageUrl = Array.isArray(item.images) && item.images.length > 0
-      ? item.images[0]
-      : 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32';
-    const price = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.rentPrice?.perDay || 0);
-
-    return (
-      <TouchableOpacity style={styles.productCard} activeOpacity={0.85}>
-        <View style={styles.productImageContainer}>
-          <Image source={{ uri: imageUrl }} style={styles.productImage} resizeMode="cover" />
-          {item.ratingAvg > 0 && (
-            <View style={styles.ratingBadge}>
-              <Ionicons name="star" size={11} color="#F59E0B" />
-              <Text style={styles.ratingText}>{item.ratingAvg.toFixed(1)}</Text>
-            </View>
-          )}
-          <TouchableOpacity
-            style={styles.heartBtn}
-            onPress={() => toggleFavorite(item._id)}
-          >
-            <Ionicons
-              name={favoriteIds.includes(item._id) ? "heart" : "heart-outline"}
-              size={16}
-              color={favoriteIds.includes(item._id) ? "#EF4444" : "#FFF"}
-            />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.productInfo}>
-          <Text style={styles.productCategory}>{item.category || 'GEAR'}</Text>
-          <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-          <View style={styles.productFooter}>
-            <Text style={styles.productPrice}>{price}<Text style={styles.perDay}>/day</Text></Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderProductCard = ({ item }: { item: any }) => (
+    <DeviceCard
+      device={item}
+      variant="grid"
+      isFavorite={favoriteIds.includes(item._id)}
+      onFavoriteToggle={toggleFavorite}
+    />
+  );
 
   const currentSortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label || 'Featured';
 
@@ -443,43 +417,6 @@ const styles = StyleSheet.create({
   row: { justifyContent: 'space-between', marginBottom: 12 },
 
   // Product Card
-  productCard: {
-    width: CARD_WIDTH,
-    backgroundColor: '#1E293B',
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
-  },
-  productImageContainer: {
-    width: '100%', height: 150,
-    backgroundColor: '#FFF',
-    position: 'relative',
-  },
-  productImage: { width: '100%', height: '100%' },
-  ratingBadge: {
-    position: 'absolute', top: 8, left: 8,
-    flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12,
-  },
-  ratingText: { fontSize: 11, fontWeight: '700', color: '#FFF' },
-  heartBtn: {
-    position: 'absolute', top: 8, right: 8,
-    width: 30, height: 30, borderRadius: 15,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  productInfo: { padding: 12 },
-  productCategory: {
-    fontSize: 10, fontWeight: '700', color: '#22D3EE',
-    letterSpacing: 0.8, marginBottom: 4,
-  },
-  productName: {
-    fontSize: 13, fontWeight: '700', color: '#F1F5F9',
-    lineHeight: 18, marginBottom: 8,
-  },
-  productFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  productPrice: { fontSize: 15, fontWeight: '800', color: '#6366F1' },
-  perDay: { fontSize: 11, fontWeight: '400', color: '#64748B' },
+  // DeviceCard handles card styles
+
 });
