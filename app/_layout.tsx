@@ -1,35 +1,41 @@
 // app/_layout.tsx
 import { Stack, useRootNavigationState, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { getToken } from '../src/shared/utils/storage';
 import { FavoriteProvider } from '../src/context/FavoriteContext';
+import { AuthProvider, useAuth } from '../src/context/AuthContext';
+import { getRememberMe, removeToken } from '../src/shared/utils/storage';
 
-export default function RootLayout() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
-
+function RootLayoutContent() {
+  const { isAuthenticated, isAuthChecked, checkAuth } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  
   const rootNavigationState = useRootNavigationState();
 
+  const [isInitialAppLaunch, setIsInitialAppLaunch] = useState(true);
+
+  // Initial boot-up sequence
   useEffect(() => {
-    const checkAuth = async () => {
-      setIsAuthChecked(false);
-      try {
-        const token = await getToken();
-        setIsAuthenticated(!!token);
-      } finally {
-        setIsAuthChecked(true);
+    const initApp = async () => {
+      const rememberMe = await getRememberMe();
+      if (!rememberMe) {
+        await removeToken();
       }
+      await checkAuth();
+      setIsInitialAppLaunch(false);
     };
-    checkAuth();
+    initApp();
+  }, []);
+
+  // Sync auth state whenever path changes (covers deep links, etc.)
+  useEffect(() => {
+    if (!isInitialAppLaunch) {
+        checkAuth();
+    }
   }, [segments.join('/')]);
 
+  // Redirection logic
   useEffect(() => {
-    if (!rootNavigationState?.key) return;
-
-    if (!isAuthChecked) return;
+    if (!rootNavigationState?.key || !isAuthChecked || isInitialAppLaunch) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -38,11 +44,17 @@ export default function RootLayout() {
     } else if (isAuthenticated && inAuthGroup) {
       router.replace('/(tabs)/home');
     }
-  }, [isAuthenticated, segments, rootNavigationState?.key, isAuthChecked]);
+  }, [isAuthenticated, isAuthChecked, isInitialAppLaunch, segments, rootNavigationState?.key]);
 
+  return <Stack screenOptions={{ headerShown: false }} />;
+}
+
+export default function RootLayout() {
   return (
-    <FavoriteProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-    </FavoriteProvider>
+    <AuthProvider>
+      <FavoriteProvider>
+        <RootLayoutContent />
+      </FavoriteProvider>
+    </AuthProvider>
   );
 }

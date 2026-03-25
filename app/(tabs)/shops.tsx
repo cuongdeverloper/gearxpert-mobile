@@ -11,6 +11,7 @@ import {
   TextInput,
   RefreshControl,
   FlatList,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +19,29 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiGetPublicSuppliers } from '../../src/features/supplier/api';
 import BottomNav from '../../src/components/BottomNav';
+import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
+import * as Location from 'expo-location';
+import Svg, { Circle, Image as SvgImage, Defs, ClipPath, G } from 'react-native-svg';
+
+const DA_NANG_COORDS = { latitude: 16.0544, longitude: 108.2022 };
+
+import { shopsStyles as styles, mapDarkStyle } from '../../src/styles/screens/shops.styles';
+
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    ;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c; // Distance in km
+  return d;
+};
+
+const deg2rad = (deg: number) => deg * (Math.PI / 180);
 
 const { width } = Dimensions.get('window');
 
@@ -30,6 +54,38 @@ const DISTRICTS = [
   'Cẩm Lệ',
 ];
 
+const ShopMarker = React.memo(({ shop, isSelected, onPress, onCalloutPress }: any) => {
+  const size = isSelected ? 56 : 48;
+
+  return (
+    <Marker
+      coordinate={shop.coords}
+      onPress={onPress}
+      tracksViewChanges={true}
+    >
+      <Image
+        source={{ uri: shop.businessAvatar || `https://i.pravatar.cc/150?u=${shop._id}` }}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          borderWidth: 2,
+          borderColor: isSelected ? '#6366F1' : '#FFF',
+          backgroundColor: '#FFF',
+        }}
+        resizeMode="cover"
+      />
+
+      <Callout tooltip onPress={onCalloutPress}>
+        <View style={styles.callout}>
+          <Text style={styles.calloutTitle}>{shop.businessName}</Text>
+          <Text style={styles.calloutBtn}>View Hub Details</Text>
+        </View>
+      </Callout>
+    </Marker>
+  );
+});
+
 const ShopScreen = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -39,6 +95,52 @@ const ShopScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
 
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [userLocation, setUserLocation] = useState<any>(null);
+  const [selectedShop, setSelectedShop] = useState<any>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const mapRef = React.useRef<MapView>(null);
+
+  const fetchUserLocation = async () => {
+    try {
+      setIsLocating(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Please enable location permissions in settings.');
+        setIsLocating(false);
+        return;
+      }
+
+      // Try last known first (fastest)
+      let location = await Location.getLastKnownPositionAsync({});
+
+      // If none, get current
+      if (!location) {
+        location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+      }
+
+      if (location) {
+        setUserLocation(location.coords);
+        if (viewMode === 'map') {
+          mapRef.current?.animateToRegion({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          });
+        }
+      }
+      setIsLocating(false);
+    } catch (error) {
+      console.error('Error getting location:', error);
+      Alert.alert('Location Missing', 'Make sure GPS/Location is turned ON in your device settings.');
+      setIsLocating(false);
+    }
+  };
+
   const fetchData = useCallback(async () => {
     try {
       const params: any = {};
@@ -47,7 +149,18 @@ const ShopScreen = () => {
 
       const res = await ApiGetPublicSuppliers(params);
       if (res && res.success) {
-        setSuppliers(res.data || []);
+        const shops = (res.data || []).map((s: any) => {
+          const lat = s.warehouseAddress?.lat || (16.05 + (parseInt(s._id.substring(0, 8), 16) % 100) / 2000);
+          const lng = s.warehouseAddress?.lng || (108.20 + (parseInt(s._id.substring(8, 16), 16) % 100) / 2000);
+
+          let distance = null;
+          if (userLocation) {
+            distance = calculateDistance(userLocation.latitude, userLocation.longitude, lat, lng);
+          }
+
+          return { ...s, coords: { latitude: lat, longitude: lng }, distance };
+        });
+        setSuppliers(shops);
       }
     } catch (error) {
       console.error('Error fetching suppliers:', error);
@@ -55,7 +168,7 @@ const ShopScreen = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [searchQuery, selectedDistrict]);
+  }, [searchQuery, selectedDistrict, userLocation]);
 
   useEffect(() => {
     fetchData();
@@ -82,10 +195,13 @@ const ShopScreen = () => {
             <Text style={styles.ratingText}>{item.supplierRating?.toFixed(1) || '0.0'}</Text>
           </View>
         </View>
-        
+
         <View style={styles.shopLocationRow}>
           <Ionicons name="location-outline" size={14} color="#6366F1" />
           <Text style={styles.shopLocationText}>{item.warehouseAddress?.district || 'Đà Nẵng'}</Text>
+          {item.distance !== null && (
+            <Text style={styles.distanceText}>• {item.distance < 1 ? `${(item.distance * 1000).toFixed(0)}m` : `${item.distance.toFixed(1)}km`}</Text>
+          )}
         </View>
 
         <View style={styles.shopFooter}>
@@ -110,275 +226,161 @@ const ShopScreen = () => {
         colors={['#1E293B', '#0F172A']}
         style={StyleSheet.absoluteFillObject}
       />
-      
+
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 10, zIndex: 100 }]}>
         <View>
-          <Text style={styles.headerTitle}>Partner Hubs</Text>
-          <Text style={styles.headerSubtitle}>Find professional gear shops</Text>
+          <Text style={styles.headerTitle}>{viewMode === 'list' ? 'Partner Hubs' : 'Explore Map'}</Text>
+          <Text style={styles.headerSubtitle}>
+            {viewMode === 'list' ? 'Find professional gear shops' : 'Locating shops around you'}
+          </Text>
         </View>
-        <TouchableOpacity style={styles.mapBtn}>
-          <Ionicons name="map-outline" size={24} color="#FFF" />
+        <TouchableOpacity
+          style={[styles.mapBtn, viewMode === 'map' && styles.activeMapBtn]}
+          onPress={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')}
+        >
+          <Ionicons name={viewMode === 'list' ? 'map-outline' : 'list-outline'} size={22} color="#FFF" />
         </TouchableOpacity>
       </View>
 
       <View style={{ flex: 1 }}>
-        <FlatList
-          data={suppliers}
-          keyExtractor={(item) => item._id}
-          renderItem={renderShopItem}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366F1" />
-          }
-          ListHeaderComponent={
-            <>
-              {/* Search Bar */}
-              <View style={styles.searchContainer}>
-                <View style={styles.searchBar}>
-                  <Ionicons name="search-outline" size={20} color="#94A3B8" />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search shops or areas..."
-                    placeholderTextColor="#64748B"
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                  />
+        {viewMode === 'list' ? (
+          <FlatList
+            data={suppliers}
+            keyExtractor={(item) => item._id}
+            renderItem={renderShopItem}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366F1" />
+            }
+            ListHeaderComponent={
+              <>
+                {/* Search Bar */}
+                <View style={styles.searchContainer}>
+                  <View style={styles.searchBar}>
+                    <Ionicons name="search-outline" size={20} color="#94A3B8" />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Search shops or areas..."
+                      placeholderTextColor="#64748B"
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                    />
+                  </View>
                 </View>
-              </View>
 
-              {/* Districts */}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.districtsScroll}
-              >
-                <TouchableOpacity
-                  style={[styles.districtPill, selectedDistrict === null && styles.activeDistrictPill]}
-                  onPress={() => setSelectedDistrict(null)}
+                {/* Districts */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.districtsScroll}
                 >
-                  <Text style={[styles.districtPillText, selectedDistrict === null && styles.activeDistrictPillText]}>All Đà Nẵng</Text>
-                </TouchableOpacity>
-                {DISTRICTS.map(d => (
                   <TouchableOpacity
-                    key={d}
-                    style={[styles.districtPill, selectedDistrict === d && styles.activeDistrictPill]}
-                    onPress={() => setSelectedDistrict(d)}
+                    style={[styles.districtPill, selectedDistrict === null && styles.activeDistrictPill]}
+                    onPress={() => setSelectedDistrict(null)}
                   >
-                    <Text style={[styles.districtPillText, selectedDistrict === d && styles.activeDistrictPillText]}>{d}</Text>
+                    <Text style={[styles.districtPillText, selectedDistrict === null && styles.activeDistrictPillText]}>All Đà Nẵng</Text>
                   </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </>
-          }
-          ListEmptyComponent={
-            loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#6366F1" />
+                  {DISTRICTS.map(d => (
+                    <TouchableOpacity
+                      key={d}
+                      style={[styles.districtPill, selectedDistrict === d && styles.activeDistrictPill]}
+                      onPress={() => setSelectedDistrict(d)}
+                    >
+                      <Text style={[styles.districtPillText, selectedDistrict === d && styles.activeDistrictPillText]}>{d}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </>
+            }
+            ListEmptyComponent={
+              loading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#6366F1" />
+                </View>
+              ) : (
+                <View style={styles.emptyState}>
+                  <Ionicons name="storefront-outline" size={64} color="#334155" />
+                  <Text style={styles.emptyText}>No partner hubs found</Text>
+                </View>
+              )
+            }
+            ListFooterComponent={<View style={{ height: 120 }} />}
+          />
+        ) : (
+          <View style={styles.mapContainer}>
+            <MapView
+              ref={mapRef}
+              style={styles.map}
+              initialRegion={{
+                ...DA_NANG_COORDS,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }}
+              customMapStyle={mapDarkStyle}
+            >
+              {suppliers.map((shop) => (
+                <ShopMarker
+                  key={shop._id}
+                  shop={shop}
+                  isSelected={selectedShop?._id === shop._id}
+                  onPress={() => setSelectedShop(shop)}
+                  onCalloutPress={() => router.push(`/supplier/${shop.userId?._id || shop._id}` as any)}
+                />
+              ))}
+
+              {userLocation && (
+                <Marker coordinate={userLocation} title="You're here" pinColor="#6366F1">
+                  <View style={styles.userMarker}>
+                    <View style={styles.userMarkerCore} />
+                    <View style={styles.userMarkerPulse} />
+                  </View>
+                </Marker>
+              )}
+            </MapView>
+
+            <View style={styles.mapControls}>
+              <TouchableOpacity
+                style={styles.mapIconBtn}
+                onPress={fetchUserLocation}
+              >
+                <Ionicons name="location" size={20} color={isLocating ? "#94A3B8" : "#6366F1"} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.mapIconBtn}
+                onPress={() => mapRef.current?.animateToRegion({
+                  ...DA_NANG_COORDS,
+                  latitudeDelta: 0.05,
+                  longitudeDelta: 0.05,
+                })}
+              >
+                <Text style={{ fontWeight: 'bold', color: '#FFF' }}>DN</Text>
+              </TouchableOpacity>
+            </View>
+
+            {selectedShop && (
+              <View style={styles.shopOverlay}>
+                <TouchableOpacity
+                  style={styles.shopOverlayCard}
+                  onPress={() => router.push(`/supplier/${selectedShop.userId?._id || selectedShop._id}` as any)}
+                >
+                  <Image source={{ uri: selectedShop.businessAvatar }} style={styles.overlayImage} />
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={styles.overlayName}>{selectedShop.businessName}</Text>
+                    <Text style={styles.overlayDistrict}>{selectedShop.warehouseAddress?.district}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={24} color="#6366F1" />
+                </TouchableOpacity>
               </View>
-            ) : (
-              <View style={styles.emptyState}>
-                <Ionicons name="storefront-outline" size={64} color="#334155" />
-                <Text style={styles.emptyText}>No partner hubs found</Text>
-              </View>
-            )
-          }
-          ListFooterComponent={<View style={{ height: 120 }} />}
-        />
+            )}
+          </View>
+        )}
       </View>
 
       <BottomNav activeTab="shops" />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    color: '#FFF',
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    color: '#94A3B8',
-    fontSize: 14,
-    marginTop: 2,
-  },
-  mapBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  searchContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 16,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 52,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  searchInput: {
-    flex: 1,
-    color: '#FFF',
-    marginLeft: 12,
-    fontSize: 15,
-  },
-  districtsScroll: {
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-    gap: 10,
-  },
-  districtPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  activeDistrictPill: {
-    backgroundColor: '#6366F1',
-    borderColor: '#6366F1',
-  },
-  districtPillText: {
-    color: '#94A3B8',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  activeDistrictPillText: {
-    color: '#FFF',
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  shopCard: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    marginHorizontal: 24,
-    marginBottom: 16,
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    flexDirection: 'row',
-    height: 120,
-  },
-  shopImage: {
-    width: 120,
-    height: '100%',
-    backgroundColor: '#1E293B',
-  },
-  shopInfo: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'space-between',
-  },
-  shopHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  shopName: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '700',
-    flex: 1,
-    marginRight: 8,
-  },
-  ratingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(251, 191, 36, 0.1)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    gap: 4,
-  },
-  ratingText: {
-    color: '#FBBF24',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  shopLocationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  shopLocationText: {
-    color: '#64748B',
-    fontSize: 13,
-  },
-  shopFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  deviceCountBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(99, 102, 241, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    gap: 4,
-  },
-  deviceCountText: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  onlineStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  onlineDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10B981',
-  },
-  onlineText: {
-    color: '#10B981',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    height: 300,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    color: '#64748B',
-    fontSize: 16,
-    marginTop: 12,
-  },
-});
 
 export default ShopScreen;

@@ -1,0 +1,373 @@
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
+
+export const homeStyles = StyleSheet.create({
+  container: { 
+    flex: 1, 
+    backgroundColor: '#0F172A',
+  },
+  bgContainer: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+  },
+  glowOrb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    filter: [{ blur: 60 }] as any,
+    opacity: 0.6,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  topHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 5,
+  },
+  logoHeader: {
+    width: 280,
+    height: 90,
+    marginLeft: -70,
+  },
+  avatarContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: 'rgba(34, 211, 238, 0.5)',
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 22,
+  },
+  searchSection: {
+    paddingHorizontal: 24,
+    marginBottom: 30,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    height: 56,
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden',
+  },
+  searchPlaceholder: {
+    flex: 1,
+    marginLeft: 12,
+    color: '#94A3B8',
+    fontSize: 15,
+  },
+  filterButton: {
+    backgroundColor: '#6366F1',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heroSection: {
+    marginHorizontal: 24,
+    height: 180,
+    borderRadius: 28,
+    overflow: 'hidden',
+    marginBottom: 36,
+    backgroundColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  heroContent: {
+    position: 'absolute',
+    bottom: 24,
+    left: 24,
+    right: 24,
+  },
+  heroBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  heroBadgeText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  heroSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  sectionContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 16,
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#F8FAFC',
+    letterSpacing: -0.5,
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#22D3EE',
+  },
+  categoriesList: {
+    paddingHorizontal: 24,
+    paddingBottom: 36,
+    gap: 12,
+  },
+  categoryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  categoryPillActive: {
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
+  },
+  categoryPillText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#F8FAFC',
+  },
+  categoryPillTextActive: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFF',
+  },
+  trendingList: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    gap: 20,
+  },
+  // Modal Styles
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.1)', // Very subtle dimming
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 70 : 60,
+    right: 24,
+    width: 260,
+    backgroundColor: '#1E293B',
+    borderRadius: 24,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 15,
+  },
+  dropdownHeader: {
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dropdownHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  dropdownAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  dropdownName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFF',
+    marginBottom: 2,
+  },
+  dropdownEmail: {
+    fontSize: 12,
+    color: '#94A3B8',
+  },
+  dropdownDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginHorizontal: 16,
+  },
+  statsContainer: {
+    padding: 16,
+    gap: 12,
+  },
+  rankCard: {
+    borderRadius: 16,
+    padding: 12,
+    overflow: 'hidden',
+  },
+  rankContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  rankLabel: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: 'rgba(0,0,0,0.8)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  rankPoints: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'rgba(0,0,0,0.6)',
+  },
+  walletCard: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  walletHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  walletLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+  walletBalance: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#10B981',
+  },
+  menuContainer: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 16,
+  },
+  dropdownIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  dropdownItemText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#CBD5E1',
+  },
+  dropdownArrow: {
+    marginLeft: 'auto',
+  },
+  // BRANDS
+  brandList: {
+    paddingHorizontal: 20,
+    marginTop: 12,
+    gap: 16,
+  },
+  brandCard: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  brandIconContainer: {
+    width: 60, height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(34,211,238,0.1)',
+    borderWidth: 1, borderColor: 'rgba(34,211,238,0.2)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  brandText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#94A3B8',
+  },
+  // KITS
+  kitsContainer: {
+    paddingHorizontal: 20,
+    marginTop: 12,
+    gap: 16,
+  },
+  kitCard: {
+    width: '100%',
+    height: 140,
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  kitImage: {
+    width: '100%', height: '100%',
+  },
+  kitGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  kitInfo: {
+    position: 'absolute',
+    bottom: 16, left: 20, right: 20,
+  },
+  kitTitle: {
+    fontSize: 18, fontWeight: 'bold', color: '#FFF',
+    marginBottom: 4, letterSpacing: -0.5,
+  },
+  kitDesc: {
+    fontSize: 13, color: 'rgba(255,255,255,0.8)',
+  }
+});

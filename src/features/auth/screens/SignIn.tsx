@@ -12,7 +12,9 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { setToken } from "../../../shared/utils/storage";
+import { getRememberMe, setRememberMe, getSavedEmail, setSavedEmail, clearSavedEmail } from "../../../shared/utils/storage";
+import { useEffect } from "react";
+import { useAuth } from "../../../context/AuthContext";
 import { ApiLogin } from "../api";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -23,10 +25,24 @@ import { Ionicons } from "@expo/vector-icons";
 const { width, height } = Dimensions.get("window");
 
 export const SignIn = () => {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMeState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const loadSavedData = async () => {
+      const savedEmail = await getSavedEmail();
+      const rememberPref = await getRememberMe();
+      if (rememberPref && savedEmail) {
+        setEmail(savedEmail);
+        setRememberMeState(true);
+      }
+    };
+    loadSavedData();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -39,7 +55,18 @@ export const SignIn = () => {
       const response = await ApiLogin(email, password);
 
       if (response.errorCode === 0 && response.data) {
-        await setToken(response.data.access_token);
+        // Handle Remember Me
+        if (rememberMe) {
+          await setRememberMe(true);
+          await setSavedEmail(email);
+        } else {
+          await setRememberMe(false);
+          await clearSavedEmail();
+        }
+
+        // Use global login to update state immediately
+        await login(response.data.access_token);
+
         if (response.data.role === "CUSTOMER") {
           router.replace("/home");
         } else {
@@ -108,9 +135,24 @@ export const SignIn = () => {
               />
             </View>
 
-            <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
+            <View style={styles.optionsRow}>
+              <TouchableOpacity 
+                style={styles.rememberMeContainer} 
+                onPress={() => setRememberMeState(!rememberMe)}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={rememberMe ? "checkbox" : "square-outline"} 
+                  size={20} 
+                  color={rememberMe ? Colors.dark.accent : "#94A3B8"} 
+                />
+                <Text style={styles.rememberMeText}>Remember me</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.forgotPassword}>
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               style={[styles.buttonWrapper, isLoading && styles.buttonDisabled]}
@@ -232,9 +274,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     height: '100%',
   },
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rememberMeText: {
+    color: '#94A3B8',
+    fontSize: 14,
+  },
   forgotPassword: {
     alignSelf: 'flex-end',
-    marginBottom: 24,
   },
   forgotPasswordText: {
     color: Colors.dark.accent,

@@ -15,6 +15,7 @@ export default function TabLayout() {
       <Tabs.Screen name="shops" />
       <Tabs.Screen name="products" />
       <Tabs.Screen name="profile" />
+      <Tabs.Screen name="vouchers" options={{ href: null }} />
       <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="favorites" options={{ href: null }} />
