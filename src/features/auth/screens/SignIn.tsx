@@ -1,25 +1,28 @@
+import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Linking from 'expo-linking';
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import * as WebBrowser from 'expo-web-browser';
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
+  Image,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Image,
-  Dimensions,
-  Platform,
 } from "react-native";
-import { getRememberMe, setRememberMe, getSavedEmail, setSavedEmail, clearSavedEmail } from "../../../shared/utils/storage";
-import { useEffect } from "react";
-import { useAuth } from "../../../context/AuthContext";
-import { ApiLogin } from "../api";
-import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import { Colors } from "../../../../constants/theme";
-import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../../context/AuthContext";
+import { clearSavedEmail, getRememberMe, getSavedEmail, setRememberMe, setSavedEmail } from "../../../shared/utils/storage";
+import { ApiLogin } from "../api";
+
+WebBrowser.maybeCompleteAuthSession();
 
 // Get screen dimensions
 const { width, height } = Dimensions.get("window");
@@ -79,6 +82,44 @@ export const SignIn = () => {
       Alert.alert("Lỗi", "Lỗi kết nối server");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const redirectUrl = Linking.createURL('oauth2/callback');
+      const stateObj = { mobile: true, redirectUrl };
+      const authUrl = `https://gearxpert-production.up.railway.app/auth/google?state=${encodeURIComponent(JSON.stringify(stateObj))}`;
+
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+
+      if (result.type === 'success' && result.url) {
+        try {
+          const parsedUrl = Linking.parse(result.url);
+          const { queryParams } = parsedUrl;
+          
+          if (queryParams?.error) {
+            Alert.alert("Lỗi", decodeURIComponent(queryParams.error as string));
+            return;
+          }
+
+          if (queryParams?.accessToken) {
+            const accessToken = decodeURIComponent(queryParams.accessToken as string);
+            
+            await login(accessToken);
+            // Defer the navigation to ensure the Browser/WebView is completely dismissed first
+            setTimeout(() => {
+              router.replace("/home");
+            }, 300);
+          }
+        } catch (parseError) {
+          console.error("Error parsing login result:", parseError);
+          Alert.alert("Lỗi", "Dữ liệu trả về bị lỗi. Không thể đăng nhập.");
+        }
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi đăng nhập bằng Google");
     }
   };
 
@@ -180,7 +221,7 @@ export const SignIn = () => {
             </View>
 
             <View style={styles.socialContainer}>
-              <TouchableOpacity style={styles.socialButton}>
+              <TouchableOpacity style={styles.socialButton} onPress={handleGoogleLogin}>
                 <Ionicons name="logo-google" size={24} color="#F1F5F9" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.socialButton}>

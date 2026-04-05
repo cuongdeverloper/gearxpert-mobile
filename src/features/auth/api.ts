@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://gearxpert-production.up.railway.app/api';
+export const BASE_URL = 'https://gearxpert-production.up.railway.app/api';
 
 export const ApiLogin = async (email: string, password: string) => {
   try {
