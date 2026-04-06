@@ -26,6 +26,8 @@ import {
   ApiGetFollowStatus,
 } from '../../src/features/supplier/api';
 import DeviceCard from '../../src/components/DeviceCard';
+import { useAuth } from '../../src/context/AuthContext';
+import { getConversationApi, ApiCreateConversation } from '../../src/features/chat/api';
 
 const { width } = Dimensions.get('window');
 
@@ -88,6 +90,37 @@ const ShopDetailScreen = () => {
       }
     } catch (error) {
       console.error('Error toggling follow:', error);
+    }
+  };
+
+  const { user, isAuthenticated } = useAuth();
+  const handleContact = async () => {
+    if (!isAuthenticated) {
+      router.push('/(auth)/login');
+      return;
+    }
+
+    const receiverId = supplier?.userId?._id || supplier?.userId;
+    if (!receiverId) return;
+
+    try {
+      const conversations = await getConversationApi();
+      const existing = conversations?.find((c: any) => 
+        c.members.includes(receiverId) && c.members.includes(user?.id)
+      );
+
+      if (existing) {
+        router.push(`/messenger/${existing._id}`);
+      } else {
+        const newConv = await ApiCreateConversation(receiverId);
+        if (newConv?.data?._id) {
+          router.push(`/messenger/${newConv.data._id}`);
+        } else if (newConv?._id) {
+          router.push(`/messenger/${newConv._id}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error starting conversation:', error);
     }
   };
 
@@ -200,7 +233,10 @@ const ShopDetailScreen = () => {
                 </Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.contactBtn}>
+              <TouchableOpacity 
+                style={styles.contactBtn}
+                onPress={handleContact}
+              >
                 <Ionicons name="chatbubble-ellipses-outline" size={18} color="#FFF" />
                 <Text style={styles.contactBtnText}>Messages</Text>
               </TouchableOpacity>

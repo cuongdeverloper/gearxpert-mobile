@@ -5,14 +5,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef } from 'react';
 
-type TabId = 'home' | 'search' | 'blog' | 'shops' | 'profile';
+type TabId = 'home' | 'search' | 'blog' | 'shops' | 'messenger' | 'profile';
 
 const TABS: { id: TabId; icon: string; activeIcon: string; route: string }[] = [
-  { id: 'home',     icon: 'home-outline',     activeIcon: 'home',     route: '/(tabs)/home' },
-  { id: 'blog',     icon: 'newspaper-outline', activeIcon: 'newspaper', route: '/(tabs)/blog' },
-  { id: 'search',   icon: 'search-outline',   activeIcon: 'search',   route: '/(tabs)/products' },
-  { id: 'shops',    icon: 'storefront-outline', activeIcon: 'storefront', route: '/(tabs)/shops' },
-  { id: 'profile',  icon: 'person-outline',   activeIcon: 'person',   route: '/(tabs)/profile' },
+  { id: 'home',      icon: 'home-outline',      activeIcon: 'home',      route: '/(tabs)/home' },
+  { id: 'blog',      icon: 'newspaper-outline',  activeIcon: 'newspaper',  route: '/(tabs)/blog' },
+  { id: 'search',    icon: 'search-outline',    activeIcon: 'search',    route: '/(tabs)/products' },
+  { id: 'shops',     icon: 'storefront-outline',  activeIcon: 'storefront',  route: '/(tabs)/shops' },
+  { id: 'messenger', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses', route: '/(tabs)/messenger' },
+  { id: 'profile',   icon: 'person-outline',    activeIcon: 'person',    route: '/(tabs)/profile' },
 ];
 
 function AnimatedTabItem({ tab, isActive, onPress }: { tab: typeof TABS[0], isActive: boolean, onPress: () => void }) {

@@ -49,12 +49,16 @@ function RootLayoutContent() {
   return <Stack screenOptions={{ headerShown: false }} />;
 }
 
+import { SocketProvider } from '../src/context/SocketContext';
+
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <FavoriteProvider>
-        <RootLayoutContent />
-      </FavoriteProvider>
+      <SocketProvider>
+        <FavoriteProvider>
+          <RootLayoutContent />
+        </FavoriteProvider>
+      </SocketProvider>
     </AuthProvider>
   );
 }
