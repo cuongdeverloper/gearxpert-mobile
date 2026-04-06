@@ -12,7 +12,16 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { getRememberMe, setRememberMe, getSavedEmail, setSavedEmail, clearSavedEmail } from "../../../shared/utils/storage";
+import { 
+  getRememberMe, 
+  setRememberMe, 
+  getSavedEmail, 
+  setSavedEmail, 
+  clearSavedEmail,
+  getSavedPassword,
+  setSavedPassword,
+  clearSavedPassword
+} from "../../../shared/utils/storage";
 import { useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { ApiLogin } from "../api";
@@ -39,9 +48,11 @@ export const SignIn = () => {
   useEffect(() => {
     const loadSavedData = async () => {
       const savedEmail = await getSavedEmail();
+      const savedPassword = await getSavedPassword();
       const rememberPref = await getRememberMe();
-      if (rememberPref && savedEmail) {
-        setEmail(savedEmail);
+      if (rememberPref) {
+        if (savedEmail) setEmail(savedEmail);
+        if (savedPassword) setPassword(savedPassword);
         setRememberMeState(true);
       }
     };
@@ -63,9 +74,11 @@ export const SignIn = () => {
         if (rememberMe) {
           await setRememberMe(true);
           await setSavedEmail(email);
+          await setSavedPassword(password);
         } else {
           await setRememberMe(false);
           await clearSavedEmail();
+          await clearSavedPassword();
         }
 
         // Use global login to update state immediately
@@ -224,9 +237,6 @@ export const SignIn = () => {
             <View style={styles.socialContainer}>
               <TouchableOpacity style={styles.socialButton} onPress={handleGoogleLogin}>
                 <Ionicons name="logo-google" size={24} color="#F1F5F9" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-apple" size={24} color="#F1F5F9" />
               </TouchableOpacity>
             </View>
           </BlurView>

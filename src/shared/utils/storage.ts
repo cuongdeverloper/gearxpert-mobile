@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 const ACCESS_TOKEN_KEY = 'accessToken';
 const REMEMBER_ME_KEY = 'rememberMe';
 const SAVED_EMAIL_KEY = 'savedEmail';
+const SAVED_PASSWORD_KEY = 'savedPassword';
 
 type StorageBackend = {
   getItem: (key: string) => Promise<string | null>;
@@ -117,4 +118,16 @@ export async function getSavedEmail() {
 
 export async function clearSavedEmail() {
   await removeItem(SAVED_EMAIL_KEY);
+}
+
+export async function setSavedPassword(password: string) {
+  await setItem(SAVED_PASSWORD_KEY, password);
+}
+
+export async function getSavedPassword() {
+  return await getItem(SAVED_PASSWORD_KEY);
+}
+
+export async function clearSavedPassword() {
+  await removeItem(SAVED_PASSWORD_KEY);
 }
