@@ -1,17 +1,24 @@
+import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Linking from 'expo-linking';
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import * as WebBrowser from 'expo-web-browser';
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
+  Image,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Image,
-  Dimensions,
-  Platform,
 } from "react-native";
+import { useAuth } from "../../../context/AuthContext";
+import { Colors } from "../../../../constants/theme";
 import { 
   getRememberMe, 
   setRememberMe, 
@@ -22,15 +29,8 @@ import {
   setSavedPassword,
   clearSavedPassword
 } from "../../../shared/utils/storage";
-import { useEffect } from "react";
-import { useAuth } from "../../../context/AuthContext";
 import { ApiLogin } from "../api";
-import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
-import { Colors } from "../../../../constants/theme";
-import { Ionicons } from "@expo/vector-icons";
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
+
 
 WebBrowser.maybeCompleteAuthSession();
 
