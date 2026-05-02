@@ -45,10 +45,10 @@ export default function ProfileScreen() {
       </View>
       <Text style={styles.menuLabel}>{label}</Text>
       {value ? (
-         <Text style={styles.menuValue}>{value}</Text>
+        <Text style={styles.menuValue}>{value}</Text>
       ) : null}
       {!hideArrow && (
-         <Ionicons name="chevron-forward" size={18} color="#475569" style={styles.menuArrow} />
+        <Ionicons name="chevron-forward" size={18} color="#475569" style={styles.menuArrow} />
       )}
     </TouchableOpacity>
   );
@@ -61,9 +61,11 @@ export default function ProfileScreen() {
     );
   }
 
+  const isStaff = userProfile?.role === 'STAFF' || userProfile?.role === 'OPERATION_STAFF' || userProfile?.role === 'ADMIN';
+
   // Determine Rank Badge Colors
   const isGoldRank = userProfile?.rank?.toLowerCase() === 'gold';
-  const rankColors = isGoldRank 
+  const rankColors = isGoldRank
     ? { border: 'rgba(245, 158, 11, 0.5)', bg: 'rgba(245, 158, 11, 0.15)', text: '#FCD34D' }
     : { border: 'rgba(226, 232, 240, 0.3)', bg: 'rgba(248, 250, 252, 0.1)', text: '#CBD5E1' };
 
@@ -105,39 +107,45 @@ export default function ProfileScreen() {
         {/* Profile Info */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarWrapper}>
-            <Image 
-              source={{ uri: userProfile?.avatar || 'https://i.pravatar.cc/150?img=33' }} 
-              style={styles.avatarImage} 
+            <Image
+              source={{ uri: userProfile?.avatar || 'https://i.pravatar.cc/150?img=33' }}
+              style={styles.avatarImage}
             />
             <TouchableOpacity style={styles.cameraIconBadge}>
-               <Ionicons name="camera" size={14} color="#FFF" />
+              <Ionicons name="camera" size={14} color="#FFF" />
             </TouchableOpacity>
           </View>
-          
+
           <Text style={styles.fullName}>{userProfile?.fullName || 'Creative Explorer'}</Text>
           <Text style={styles.email}>{userProfile?.email || 'user@gearxpert.com'}</Text>
 
           <View style={[styles.rankBadge, { backgroundColor: rankColors.bg, borderColor: rankColors.border }]}>
-             <Ionicons name="star" size={12} color={rankColors.text} style={{ marginRight: 4 }} />
-             <Text style={[styles.rankBadgeText, { color: rankColors.text }]}>{userProfile?.rank || 'SILVER'} MEMBER</Text>
+            <Ionicons name="star" size={12} color={rankColors.text} style={{ marginRight: 4 }} />
+            <Text style={[styles.rankBadgeText, { color: rankColors.text }]}>{userProfile?.rank || 'SILVER'} MEMBER</Text>
           </View>
         </View>
 
         {/* Stats Section / Wallet & Points */}
         <View style={styles.statsContainer}>
-          <BlurView intensity={20} tint="dark" style={styles.statCard}>
-            <View style={[styles.statIconBox, { backgroundColor: 'rgba(34, 211, 238, 0.15)' }]}>
-               <Ionicons name="wallet-outline" size={24} color="#22D3EE" />
-            </View>
-            <Text style={styles.statValue}>
-               {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(userProfile?.walletBalance || 0)}
-            </Text>
-            <Text style={styles.statLabel}>My Wallet</Text>
-          </BlurView>
-          
+          <TouchableOpacity 
+            style={{ flex: 1 }} 
+            activeOpacity={0.8} 
+            onPress={() => router.push('/wallet')}
+          >
+            <BlurView intensity={20} tint="dark" style={styles.statCard}>
+              <View style={[styles.statIconBox, { backgroundColor: 'rgba(34, 211, 238, 0.15)' }]}>
+                <Ionicons name="wallet-outline" size={24} color="#22D3EE" />
+              </View>
+              <Text style={styles.statValue}>
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(userProfile?.walletBalance || 0)}
+              </Text>
+              <Text style={styles.statLabel}>My Wallet</Text>
+            </BlurView>
+          </TouchableOpacity>
+
           <BlurView intensity={20} tint="dark" style={styles.statCard}>
             <View style={[styles.statIconBox, { backgroundColor: 'rgba(252, 211, 77, 0.15)' }]}>
-               <Ionicons name="trophy-outline" size={24} color="#FCD34D" />
+              <Ionicons name="trophy-outline" size={24} color="#FCD34D" />
             </View>
             <Text style={styles.statValue}>{userProfile?.rewardPoints || 0}</Text>
             <Text style={styles.statLabel}>Reward Points</Text>
@@ -156,15 +164,27 @@ export default function ProfileScreen() {
 
         <Text style={styles.sectionHeader}>Actions</Text>
         <BlurView intensity={20} tint="dark" style={styles.menuSection}>
+          {isStaff && (
+            <>
+              <MenuAction 
+                icon="briefcase-outline" 
+                label="Staff Dashboard" 
+                onPress={() => router.push('/staff/dashboard')} 
+              />
+              <View style={styles.divider} />
+            </>
+          )}
           <MenuAction icon="lock-closed-outline" label="Change Password" />
           <View style={styles.divider} />
           <MenuAction icon="time-outline" label="Rental History" />
           <View style={styles.divider} />
           <MenuAction icon="star-outline" label="My Reviews" />
           <View style={styles.divider} />
+          <MenuAction icon="cart-outline" label="My Cart" onPress={() => router.push('/cart')} />
+          <View style={styles.divider} />
           <MenuAction icon="log-out-outline" label="Logout" hideArrow onPress={handleLogout} />
         </BlurView>
-        
+
         <View style={{ height: 80 }} />
       </ScrollView>
     </View>

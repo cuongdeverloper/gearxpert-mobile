@@ -81,13 +81,12 @@ export const SignIn = () => {
           await clearSavedPassword();
         }
 
-        // Use global login to update state immediately
-        await login(response.data.access_token);
-
-        if (response.data.role === "CUSTOMER") {
-          router.replace("/home");
+        if (response.data.role === "CUSTOMER" || response.data.role === "OPERATION_STAFF") {
+          // Use global login to update state immediately
+          await login(response.data.access_token);
+          // Redirection is now handled robustly by _layout.tsx
         } else {
-          Alert.alert("Thông báo", "App mobile hiện chỉ hỗ trợ Customer");
+          Alert.alert("Thông báo", "App mobile hiện chỉ hỗ trợ Customer và Staff");
         }
       } else {
         Alert.alert("Lỗi", response.message || "Đăng nhập thất bại");
@@ -121,10 +120,7 @@ export const SignIn = () => {
             const accessToken = decodeURIComponent(queryParams.accessToken as string);
             
             await login(accessToken);
-            // Defer the navigation to ensure the Browser/WebView is completely dismissed first
-            setTimeout(() => {
-              router.replace("/home");
-            }, 300);
+            // Redirection is now handled robustly by _layout.tsx
           }
         } catch (parseError) {
           console.error("Error parsing login result:", parseError);

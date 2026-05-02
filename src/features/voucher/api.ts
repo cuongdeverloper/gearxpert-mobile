@@ -1,27 +1,41 @@
 import axios from 'axios';
-
-const BASE_URL = 'https://gearxpert-production.up.railway.app/api';
+import { BASE_URL } from '../auth/api';
+import { getAuthHeaders } from '../wallet/api';
 
 export const ApiGetVouchers = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/vouchers`);
+    const config = await getAuthHeaders();
+    const response = await axios.get(`${BASE_URL}/vouchers`, config);
     return response.data;
   } catch (error: any) {
-    if (error.response) {
-      return error.response.data;
-    } else {
-      console.error("Lỗi Network:", error.message);
-      return {
-        errorCode: -1,
-        message: "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng!",
-      };
-    }
+    return error.response?.data || { errorCode: -1, message: "Lỗi mạng" };
   }
 };
 
 export const ApiValidateVoucher = async (data: any) => {
   try {
-    const response = await axios.post(`${BASE_URL}/vouchers/apply`, data);
+    const config = await getAuthHeaders();
+    const response = await axios.post(`${BASE_URL}/vouchers/apply`, data, config);
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { errorCode: -1, message: "Network error" };
+  }
+};
+
+export const ApiGetAvailableVouchersForCart = async (cartType = "RENTAL") => {
+  try {
+    const config = await getAuthHeaders();
+    const response = await axios.get(`${BASE_URL}/vouchers/available-for-cart?cartType=${cartType}`, config);
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { errorCode: -1, message: "Network error" };
+  }
+};
+
+export const ApiAutoApplyBestVoucher = async (cartType = "RENTAL") => {
+  try {
+    const config = await getAuthHeaders();
+    const response = await axios.post(`${BASE_URL}/vouchers/auto-apply`, { cartType }, config);
     return response.data;
   } catch (error: any) {
     return error.response?.data || { errorCode: -1, message: "Network error" };

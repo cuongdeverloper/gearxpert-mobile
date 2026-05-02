@@ -87,7 +87,7 @@ const MessengerScreen = () => {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.messageText}>Vui lòng đăng nhập để xem tin nhắn</Text>
-        <TouchableOpacity style={styles.loginButton} onPress={() => router.replace('/(auth)/signin')}>
+        <TouchableOpacity style={styles.loginButton} onPress={() => router.replace('/(auth)/login')}>
           <Text style={styles.loginButtonText}>Đăng nhập</Text>
         </TouchableOpacity>
       </View>

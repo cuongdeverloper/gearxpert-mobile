@@ -1,12 +1,13 @@
 // app/_layout.tsx
 import { Stack, useRootNavigationState, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { Alert } from 'react-native';
 import { FavoriteProvider } from '../src/context/FavoriteContext';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { getRememberMe, removeToken } from '../src/shared/utils/storage';
 
 function RootLayoutContent() {
-  const { isAuthenticated, isAuthChecked, checkAuth } = useAuth();
+  const { isAuthenticated, isAuthChecked, checkAuth, user, logout } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const rootNavigationState = useRootNavigationState();
@@ -41,10 +42,21 @@ function RootLayoutContent() {
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
-      router.replace('/(tabs)/home');
+    } else if (isAuthenticated && user) {
+      if (user.role === 'OPERATION_STAFF') {
+        if (inAuthGroup || segments[0] === '(tabs)') {
+          router.replace('/staff/dashboard');
+        }
+      } else if (user.role === 'CUSTOMER') {
+        if (inAuthGroup || segments[0] === 'staff') {
+          router.replace('/(tabs)/home');
+        }
+      } else {
+        Alert.alert("Thông báo", "App mobile hiện chỉ hỗ trợ Customer và Staff");
+        logout();
+      }
     }
-  }, [isAuthenticated, isAuthChecked, isInitialAppLaunch, segments, rootNavigationState?.key]);
+  }, [isAuthenticated, isAuthChecked, isInitialAppLaunch, segments, rootNavigationState?.key, user]);
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }

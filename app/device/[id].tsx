@@ -17,6 +17,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  ApiGetReturnByRental, ApiCreateReturnDraft, ApiStartReturn,
+  ApiSaveReturnInspection, ApiConfirmReturnByRental, ApiFailReturn,
+  ApiCreateReturnRetry, ApiGetHandoverByRental,
+} from '../../src/features/staff/api';
+import { ApiAddToCart, ApiAddInstantToCart } from '../../src/features/rental/cartApi';
+import {
   ApiGetDeviceDetail,
   ApiGetDeviceAddons,
   ApiGetRelatedDevices,
@@ -666,6 +672,47 @@ const DeviceDetailScreen = () => {
   
   const totalPrice = (device.rentPrice?.perDay + addonTotal) * quantity * rentalDays;
 
+  const handleAddToCart = async () => {
+    try {
+      const res = await ApiAddToCart({
+        deviceId: id,
+        quantity,
+        rentalStartDate: startDate.toISOString(),
+        rentalEndDate: endDate.toISOString(),
+        selectedAddons,
+      });
+      if (res.errorCode === 0 || !res.errorCode) {
+        Alert.alert('Thành công', 'Đã thêm vào giỏ hàng', [
+          { text: 'Tiếp tục xem' },
+          { text: 'Đến giỏ hàng', onPress: () => router.push('/cart') }
+        ]);
+      } else {
+        Alert.alert('Lỗi', res.message || 'Không thể thêm vào giỏ hàng');
+      }
+    } catch (err) {
+      Alert.alert('Lỗi', 'Đã có lỗi xảy ra');
+    }
+  };
+
+  const handleRentNow = async () => {
+    try {
+      const res = await ApiAddInstantToCart({
+        deviceId: id,
+        quantity,
+        rentalStartDate: startDate.toISOString(),
+        rentalEndDate: endDate.toISOString(),
+        selectedAddons,
+      });
+      if (res.errorCode === 0 || !res.errorCode) {
+        router.push({ pathname: '/checkout', params: { cartType: 'INSTANT' } });
+      } else {
+        Alert.alert('Lỗi', res.message || 'Không thể thực hiện thuê ngay');
+      }
+    } catch (err) {
+      Alert.alert('Lỗi', 'Đã có lỗi xảy ra');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
@@ -954,7 +1001,7 @@ const DeviceDetailScreen = () => {
           pointerEvents="none"
         />
         <View style={styles.bottomBarContent}>
-          <TouchableOpacity style={styles.cartButton}>
+          <TouchableOpacity style={styles.cartButton} onPress={() => router.push('/cart')}>
             <Ionicons name="cart-outline" size={24} color="#6366F1" />
           </TouchableOpacity>
           <TouchableOpacity 
@@ -963,6 +1010,7 @@ const DeviceDetailScreen = () => {
               device.stockQuantity <= 0 && styles.disabledButton
             ]}
             disabled={device.stockQuantity <= 0}
+            onPress={handleRentNow}
           >
             <View style={styles.rentPriceBox}>
               <Text style={styles.rentPriceLabel}>Total Price</Text>
