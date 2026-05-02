@@ -63,25 +63,19 @@ export default function ProfileScreen() {
 
   const isStaff = userProfile?.role === 'STAFF' || userProfile?.role === 'OPERATION_STAFF' || userProfile?.role === 'ADMIN';
 
-  // Determine Rank Badge Colors
+  const handleLogout = async () => {
+    await logout();
+  };
+
   const isGoldRank = userProfile?.rank?.toLowerCase() === 'gold';
   const rankColors = isGoldRank
     ? { border: 'rgba(245, 158, 11, 0.5)', bg: 'rgba(245, 158, 11, 0.15)', text: '#FCD34D' }
     : { border: 'rgba(226, 232, 240, 0.3)', bg: 'rgba(248, 250, 252, 0.1)', text: '#CBD5E1' };
 
-  const handleLogout = async () => {
-    await logout();
-  };
-
   return (
     <View style={styles.container}>
-      {/* Background with mesh gradient feel */}
       <View style={styles.bgContainer}>
-        <LinearGradient
-          colors={['#0F172A', '#1E1B4B']}
-          style={StyleSheet.absoluteFillObject}
-        />
-        {/* Glow Effects */}
+        <LinearGradient colors={['#0F172A', '#1E1B4B']} style={StyleSheet.absoluteFillObject} />
         <View style={[styles.glowOrb, { top: -50, left: -50, backgroundColor: 'rgba(99, 102, 241, 0.3)' }]} />
         <View style={[styles.glowOrb, { bottom: 100, right: -50, backgroundColor: 'rgba(34, 211, 238, 0.2)' }]} />
         <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFillObject} />
@@ -89,7 +83,6 @@ export default function ProfileScreen() {
 
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* TOP NAVIGATION */}
       <View style={[styles.navbar, { top: insets.top + 10, left: 20, right: 20 }]}>
         <TouchableOpacity style={styles.glassButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#F8FAFC" />
@@ -99,93 +92,65 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* SCROLL CONTENT */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 70 }]}
-      >
-        {/* Profile Info */}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 70 }]}>
         <View style={styles.profileHeader}>
           <View style={styles.avatarWrapper}>
-            <Image
-              source={{ uri: userProfile?.avatar || 'https://i.pravatar.cc/150?img=33' }}
-              style={styles.avatarImage}
-            />
-            <TouchableOpacity style={styles.cameraIconBadge}>
-              <Ionicons name="camera" size={14} color="#FFF" />
-            </TouchableOpacity>
+            <Image source={{ uri: userProfile?.avatar || 'https://i.pravatar.cc/150?img=33' }} style={styles.avatarImage} />
+            <TouchableOpacity style={styles.cameraIconBadge}><Ionicons name="camera" size={14} color="#FFF" /></TouchableOpacity>
           </View>
-
           <Text style={styles.fullName}>{userProfile?.fullName || 'Creative Explorer'}</Text>
           <Text style={styles.email}>{userProfile?.email || 'user@gearxpert.com'}</Text>
-
           <View style={[styles.rankBadge, { backgroundColor: rankColors.bg, borderColor: rankColors.border }]}>
             <Ionicons name="star" size={12} color={rankColors.text} style={{ marginRight: 4 }} />
             <Text style={[styles.rankBadgeText, { color: rankColors.text }]}>{userProfile?.rank || 'SILVER'} MEMBER</Text>
           </View>
         </View>
 
-        {/* Stats Section / Wallet & Points */}
         <View style={styles.statsContainer}>
-          <TouchableOpacity 
-            style={{ flex: 1 }} 
-            activeOpacity={0.8} 
-            onPress={() => router.push('/wallet')}
-          >
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.8} onPress={() => router.push('/(tabs)/wallet' as any)}>
             <BlurView intensity={20} tint="dark" style={styles.statCard}>
-              <View style={[styles.statIconBox, { backgroundColor: 'rgba(34, 211, 238, 0.15)' }]}>
-                <Ionicons name="wallet-outline" size={24} color="#22D3EE" />
-              </View>
-              <Text style={styles.statValue}>
-                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(userProfile?.walletBalance || 0)}
-              </Text>
-              <Text style={styles.statLabel}>My Wallet</Text>
+              <View style={[styles.statIconBox, { backgroundColor: 'rgba(34, 211, 238, 0.15)' }]}><Ionicons name="wallet-outline" size={24} color="#22D3EE" /></View>
+              <Text style={styles.statValue}>{(userProfile?.walletBalance || 0).toLocaleString()}đ</Text>
+              <Text style={styles.statLabel}>Ví của tôi</Text>
             </BlurView>
           </TouchableOpacity>
-
+          <View style={{ width: 15 }} />
           <BlurView intensity={20} tint="dark" style={styles.statCard}>
-            <View style={[styles.statIconBox, { backgroundColor: 'rgba(252, 211, 77, 0.15)' }]}>
-              <Ionicons name="trophy-outline" size={24} color="#FCD34D" />
-            </View>
+            <View style={[styles.statIconBox, { backgroundColor: 'rgba(252, 211, 77, 0.15)' }]}><Ionicons name="trophy-outline" size={24} color="#FCD34D" /></View>
             <Text style={styles.statValue}>{userProfile?.rewardPoints || 0}</Text>
-            <Text style={styles.statLabel}>Reward Points</Text>
+            <Text style={styles.statLabel}>Điểm thưởng</Text>
           </BlurView>
         </View>
 
-        {/* Settings Menu Sections */}
-        <Text style={styles.sectionHeader}>Personal Info</Text>
+        <Text style={styles.sectionHeader}>Thông tin cá nhân</Text>
         <BlurView intensity={20} tint="dark" style={styles.menuSection}>
-          <MenuAction icon="call-outline" label="Phone Number" value={userProfile?.phone || 'Not provided'} hideArrow />
+          <MenuAction icon="call-outline" label="Số điện thoại" value={userProfile?.phone || 'Chưa cập nhật'} hideArrow />
           <View style={styles.divider} />
-          <MenuAction icon="location-outline" label="Address" value={userProfile?.address?.city || 'Update Delivery'} />
+          <MenuAction icon="location-outline" label="Địa chỉ" value={userProfile?.address?.city || 'Đà Nẵng'} />
           <View style={styles.divider} />
-          <MenuAction icon="shield-checkmark-outline" label="Identity Verfication (eKYC)" value={userProfile?.isVerifiedEkyc ? 'Verified' : 'Pending'} />
+          <MenuAction icon="shield-checkmark-outline" label="Định danh (eKYC)" value={userProfile?.isVerifiedEkyc ? 'Đã xác minh' : 'Chưa xác minh'} />
         </BlurView>
 
-        <Text style={styles.sectionHeader}>Actions</Text>
+        <Text style={styles.sectionHeader}>Quản lý & Hành động</Text>
         <BlurView intensity={20} tint="dark" style={styles.menuSection}>
           {isStaff && (
             <>
-              <MenuAction 
-                icon="briefcase-outline" 
-                label="Staff Dashboard" 
-                onPress={() => router.push('/staff/dashboard')} 
-              />
+              <MenuAction icon="briefcase-outline" label="Khu vực nhân viên" onPress={() => router.push('/staff/dashboard')} />
               <View style={styles.divider} />
             </>
           )}
-          <MenuAction icon="lock-closed-outline" label="Change Password" />
+          <MenuAction icon="time-outline" label="Quản lý đơn thuê" onPress={() => router.push('/(tabs)/rental' as any)} />
           <View style={styles.divider} />
-          <MenuAction icon="time-outline" label="Rental History" />
+          <MenuAction icon="star-outline" label="Đánh giá của tôi" />
           <View style={styles.divider} />
-          <MenuAction icon="star-outline" label="My Reviews" />
+          <MenuAction icon="cart-outline" label="Giỏ hàng của tôi" onPress={() => router.push('/cart')} />
           <View style={styles.divider} />
-          <MenuAction icon="cart-outline" label="My Cart" onPress={() => router.push('/cart')} />
+          <MenuAction icon="lock-closed-outline" label="Đổi mật khẩu" />
           <View style={styles.divider} />
-          <MenuAction icon="log-out-outline" label="Logout" hideArrow onPress={handleLogout} />
+          <MenuAction icon="log-out-outline" label="Đăng xuất" hideArrow onPress={handleLogout} />
         </BlurView>
 
-        <View style={{ height: 80 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </View>
   );

@@ -278,7 +278,7 @@ export default function Homepage() {
                 style={styles.walletCard}
                 onPress={() => {
                   setShowDropdown(false);
-                  // router.push('/user/wallet');
+                   router.push('/(tabs)/wallet' as any);
                 }}
               >
                 <View style={styles.walletHeader}>
@@ -295,7 +295,7 @@ export default function Homepage() {
 
             <View style={styles.menuContainer}>
               {[
-                { label: 'Đơn thuê của tôi', icon: 'receipt-outline', path: '/(tabs)/my-rentals' },
+                { label: 'Đơn thuê của tôi', icon: 'receipt-outline', path: '/(tabs)/rental' },
                 { label: 'Vouchers', icon: 'ticket-outline', path: '/(tabs)/vouchers' },
                 { label: 'Yêu thích', icon: 'heart-outline', path: '/(tabs)/favorites' },
                 { label: 'Cài đặt', icon: 'settings-outline', path: '/(tabs)/settings' },

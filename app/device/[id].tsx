@@ -557,6 +557,19 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: '800',
   },
+  monthHeader: {
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    marginTop: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  monthHeaderText: {
+    color: '#6366F1',
+    fontSize: 14,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
 });
 
 const DeviceDetailScreen = () => {
@@ -1040,30 +1053,58 @@ const DeviceDetailScreen = () => {
             </View>
             
             <ScrollView style={styles.dateList}>
-              {[...Array(14)].map((_, i) => {
-                const date = new Date();
-                date.setDate(date.getDate() + i + (pickingDateType === 'end' ? 1 : 0));
+              {(() => {
+                const sections: any[] = [];
+                let currentMonth = -1;
                 
-                const isSelected = pickingDateType === 'start' 
-                  ? date.toLocaleDateString() === startDate.toLocaleDateString()
-                  : date.toLocaleDateString() === endDate.toLocaleDateString();
+                for (let i = 0; i < 180; i++) {
+                  const date = new Date();
+                  date.setDate(date.getDate() + i + (pickingDateType === 'end' ? 1 : 0));
+                  
+                  if (date.getMonth() !== currentMonth) {
+                    currentMonth = date.getMonth();
+                    sections.push({
+                      type: 'header',
+                      label: date.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' }),
+                    });
+                  }
+                  
+                  sections.push({
+                    type: 'date',
+                    date: date,
+                  });
+                }
+                
+                return sections.map((item, idx) => {
+                  if (item.type === 'header') {
+                    return (
+                      <View key={`header-${idx}`} style={styles.monthHeader}>
+                        <Text style={styles.monthHeaderText}>{item.label}</Text>
+                      </View>
+                    );
+                  }
+                  
+                  const isSelected = pickingDateType === 'start' 
+                    ? item.date.toLocaleDateString() === startDate.toLocaleDateString()
+                    : item.date.toLocaleDateString() === endDate.toLocaleDateString();
 
-                return (
-                  <TouchableOpacity 
-                    key={i} 
-                    style={[styles.dateItem, isSelected && styles.dateItemActive]}
-                    onPress={() => {
-                      handleDateSelect(date);
-                      setShowDatePicker(false);
-                    }}
-                  >
-                    <Text style={[styles.dateItemText, isSelected && styles.dateItemTextActive]}>
-                      {date.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'short' })}
-                    </Text>
-                    {isSelected && <Ionicons name="checkmark-circle" size={20} color="#6366F1" />}
-                  </TouchableOpacity>
-                );
-              })}
+                  return (
+                    <TouchableOpacity 
+                      key={`date-${idx}`} 
+                      style={[styles.dateItem, isSelected && styles.dateItemActive]}
+                      onPress={() => {
+                        handleDateSelect(item.date);
+                        setShowDatePicker(false);
+                      }}
+                    >
+                      <Text style={[styles.dateItemText, isSelected && styles.dateItemTextActive]}>
+                        {item.date.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'short' })}
+                      </Text>
+                      {isSelected && <Ionicons name="checkmark-circle" size={20} color="#6366F1" />}
+                    </TouchableOpacity>
+                  );
+                });
+              })()}
             </ScrollView>
           </View>
         </View>
