@@ -4,20 +4,20 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ApiGetTransactions } from '../../src/features/wallet/api';
+import { ApiGetTransactions } from '../../../src/features/wallet/api';
 
 export default function TransactionsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const transRes = await ApiGetTransactions();
-        if (transRes && transRes.errorCode === 0) {
-          setTransactions(transRes.data || []);
+        if (transRes && Array.isArray(transRes)) {
+          setTransactions(transRes);
         }
       } catch (error) {
         console.error(error);
@@ -33,26 +33,54 @@ export default function TransactionsScreen() {
   };
 
   const renderTransaction = ({ item }: { item: any }) => {
-    const isCredit = item.type === 'TOP_UP' || item.type === 'REFUND';
+    const isCredit = item.amount > 0;
     const sign = isCredit ? '+' : '-';
     const color = isCredit ? '#10B981' : '#EF4444';
-    const iconName = item.type === 'TOP_UP' ? 'arrow-down-outline' : item.type === 'WITHDRAWAL' ? 'arrow-up-outline' : 'swap-horizontal-outline';
+
+    let label = item.type;
+    let iconName: any = 'swap-horizontal-outline';
+
+    switch (item.type) {
+      case 'TOP_UP': 
+        label = 'Nạp tiền'; 
+        iconName = 'add-circle-outline'; 
+        break;
+      case 'WITHDRAW': 
+        label = 'Rút tiền'; 
+        iconName = 'arrow-up-outline'; 
+        break;
+      case 'PAYMENT': 
+        label = 'Thanh toán thuê'; 
+        iconName = 'cart-outline'; 
+        break;
+      case 'REFUND': 
+        label = 'Hoàn tiền'; 
+        iconName = 'refresh-outline'; 
+        break;
+      case 'DEPOSIT_REFUND': 
+        label = 'Hoàn tiền cọc'; 
+        iconName = 'shield-checkmark-outline'; 
+        break;
+    }
+
+    const statusLabel = item.status === 'SUCCESS' ? 'Thành công' : item.status === 'PENDING' ? 'Chờ duyệt' : 'Thất bại';
+    const statusColor = item.status === 'SUCCESS' ? '#10B981' : item.status === 'PENDING' ? '#FCD34D' : '#EF4444';
 
     return (
       <View style={styles.transactionCard}>
         <View style={styles.transactionLeft}>
           <View style={[styles.iconBox, { backgroundColor: isCredit ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)' }]}>
-            <Ionicons name={iconName} size={20} color={color} />
+            <Ionicons name={iconName} size={24} color={color} />
           </View>
           <View>
-            <Text style={styles.transactionType}>{item.type}</Text>
+            <Text style={styles.transactionType}>{label}</Text>
             <Text style={styles.transactionDate}>{new Date(item.createdAt).toLocaleString('vi-VN')}</Text>
           </View>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={[styles.transactionAmount, { color }]}>{sign} {formatCurrency(item.amount)}</Text>
-          <Text style={[styles.statusText, item.status === 'SUCCESS' ? { color: '#10B981' } : item.status === 'PENDING' ? { color: '#FCD34D' } : { color: '#EF4444' }]}>
-            {item.status}
+          <Text style={[styles.transactionAmount, { color }]}>{sign} {formatCurrency(Math.abs(item.amount))}</Text>
+          <Text style={[styles.statusText, { color: statusColor }]}>
+            {statusLabel}
           </Text>
         </View>
       </View>
@@ -64,10 +92,10 @@ export default function TransactionsScreen() {
       <LinearGradient colors={['#0F172A', '#1E1B4B']} style={StyleSheet.absoluteFillObject} />
       
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.navigate('/(tabs)/wallet' as any)} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#F8FAFC" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Transaction History</Text>
+        <Text style={styles.headerTitle}>Lịch sử giao dịch</Text>
         <View style={{ width: 24 }} />
       </View>
 

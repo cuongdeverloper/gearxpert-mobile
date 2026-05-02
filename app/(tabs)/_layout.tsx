@@ -16,6 +16,12 @@ export default function TabLayout() {
       <Tabs.Screen name="products" />
       <Tabs.Screen name="messenger" />
       <Tabs.Screen name="profile" />
+      <Tabs.Screen name="rental/index" options={{ href: null }} />
+      <Tabs.Screen name="rental/[id]" options={{ href: null }} />
+      <Tabs.Screen name="wallet/index" options={{ href: null }} />
+      <Tabs.Screen name="wallet/topup" options={{ href: null }} />
+      <Tabs.Screen name="wallet/transactions" options={{ href: null }} />
+      <Tabs.Screen name="wallet/withdraw" options={{ href: null }} />
       <Tabs.Screen name="vouchers" options={{ href: null }} />
       <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />

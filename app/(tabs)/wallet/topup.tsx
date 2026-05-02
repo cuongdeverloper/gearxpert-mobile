@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ApiTopUpWallet } from '../../src/features/wallet/api';
+import { ApiTopUpWallet } from '../../../src/features/wallet/api';
 import * as WebBrowser from 'expo-web-browser';
 
 export default function TopUpScreen() {
@@ -23,11 +23,11 @@ export default function TopUpScreen() {
     setIsLoading(true);
     try {
       const res = await ApiTopUpWallet(numericAmount);
-      if (res && res.errorCode === 0 && res.data?.checkoutUrl) {
+      if ((res && res.success && res.data?.checkoutUrl) || (res && res.errorCode === 0 && res.data?.checkoutUrl)) {
         // Open payment URL in browser
-        const result = await WebBrowser.openBrowserAsync(res.data.checkoutUrl);
+        await WebBrowser.openBrowserAsync(res.data.checkoutUrl);
         // User closed browser, go back to wallet dashboard
-        router.back();
+        router.navigate('/(tabs)/wallet' as any);
       } else {
         Alert.alert("Error", res.message || "Failed to create top-up request");
       }
@@ -45,7 +45,7 @@ export default function TopUpScreen() {
       <LinearGradient colors={['#0F172A', '#1E1B4B']} style={StyleSheet.absoluteFillObject} />
       
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.navigate('/(tabs)/wallet' as any)} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#F8FAFC" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Top Up Wallet</Text>
