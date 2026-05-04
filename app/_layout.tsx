@@ -6,6 +6,11 @@ import { FavoriteProvider } from '../src/context/FavoriteContext';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { getRememberMe, removeToken } from '../src/shared/utils/storage';
 
+import * as SplashScreen from 'expo-splash-screen';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
 function RootLayoutContent() {
   const { isAuthenticated, isAuthChecked, checkAuth, user, logout } = useAuth();
   const segments = useSegments();
@@ -17,12 +22,18 @@ function RootLayoutContent() {
   // Initial boot-up sequence
   useEffect(() => {
     const initApp = async () => {
-      const rememberMe = await getRememberMe();
-      if (!rememberMe) {
-        await removeToken();
+      try {
+        const rememberMe = await getRememberMe();
+        if (!rememberMe) {
+          await removeToken();
+        }
+        await checkAuth();
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setIsInitialAppLaunch(false);
+        await SplashScreen.hideAsync();
       }
-      await checkAuth();
-      setIsInitialAppLaunch(false);
     };
     initApp();
   }, []);

@@ -10,6 +10,7 @@ import {
   ApiSaveReturnInspection, ApiConfirmReturnByRental, ApiFailReturn,
   ApiCreateReturnRetry, ApiGetHandoverByRental,
 } from '../../../src/features/staff/api';
+import { ApiGetRentalById } from '../../../src/features/rental/rentalApi';
 
 const RETURN_FAIL_REASONS = [
   { value: 'CUSTOMER_UNAVAILABLE', label: 'Khách vắng mặt / Không liên hệ được' },
@@ -25,6 +26,8 @@ export default function ReturnScreen() {
   const { id: rentalId } = useLocalSearchParams<{ id: string }>();
 
   const [record, setRecord] = useState<any>(null);
+  const [attempts, setAttempts] = useState<any[]>([]);
+  const [rental, setRental] = useState<any>(null);
   const [deliveryRef, setDeliveryRef] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [working, setWorking] = useState(false);
@@ -53,14 +56,20 @@ export default function ReturnScreen() {
   }, []);
 
   const resolveAttempt = useCallback(async () => {
-    const listRes = await ApiGetReturnByRental(rentalId);
+    let listRes = await ApiGetReturnByRental(rentalId);
     let records: any[] = listRes?.returnRecords || [];
+    
     let active = records.find((x: any) => ['DRAFT', 'IN_PROGRESS'].includes(x.status));
     if (!active) {
       const dr = await ApiCreateReturnDraft(rentalId);
       if (!dr?.success) return null;
       active = dr.returnRecord;
+      // Re-fetch to include the newly created draft in attempts history
+      listRes = await ApiGetReturnByRental(rentalId);
+      records = listRes?.returnRecords || [];
     }
+    setAttempts(records);
+    
     if (active?.status === 'DRAFT') {
       const sr = await ApiStartReturn(active.id);
       if (sr?.success) active = sr.returnRecord;
@@ -71,12 +80,18 @@ export default function ReturnScreen() {
   const load = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [attempt, handoverRes] = await Promise.all([
+      const [attempt, handoverRes, rentalRes] = await Promise.all([
         resolveAttempt(),
         ApiGetHandoverByRental(rentalId),
+        ApiGetRentalById(rentalId),
       ]);
       if (attempt) { setRecord(attempt); hydrateFromAttempt(attempt); }
       else Alert.alert('Lỗi', 'Không thể khởi tạo biên bản thu hồi.');
+      
+      if (rentalRes?.success || rentalRes?.rental) {
+        setRental(rentalRes.rental || rentalRes);
+      }
+
       // Tìm biên bản bàn giao thành công gần nhất (giống fetchDeliveryReference bên web)
       const handovers: any[] = handoverRes?.handovers || [];
       const latestSuccess = handovers.find((h: any) => h.status === 'COMPLETED' && h.result === 'SUCCESS') || handovers.find((h: any) => h.status === 'COMPLETED') || null;
@@ -111,7 +126,7 @@ export default function ReturnScreen() {
     setWorking(true);
     try {
       const res = await ApiSaveReturnInspection(record.id, buildInspectionPayload(record));
-      if (res?.success) { Alert.alert('Thành công', 'Đã lưu kiểm tra.'); setRecord(res.returnRecord); }
+      if (res?.success) { Alert.alert('Thành công', 'Đã lưu kiểm tra.'); load(); }
       else Alert.alert('Lỗi', res?.message || 'Không lưu được');
     } catch { Alert.alert('Lỗi', 'Lỗi kết nối'); }
     finally { setWorking(false); }
@@ -129,7 +144,7 @@ export default function ReturnScreen() {
       formData.append('settlement', JSON.stringify({ operatorNote: confirmNote.trim() }));
       appendImages(formData, confirmImages);
       const res = await ApiConfirmReturnByRental(rentalId, formData);
-      if (res?.success || res?.message?.includes('success') || res?.rental) {
+      if (res?.success || res?.status === 'COMPLETED' || res?.message?.toLowerCase()?.includes('thành công')) {
         Alert.alert('Thành công', 'Xác nhận thu hồi thành công. Đơn đã hoàn tất.', [{ text: 'OK', onPress: () => router.back() }]);
       } else Alert.alert('Lỗi', res?.message || 'Không thể xác nhận thu hồi');
     } catch { Alert.alert('Lỗi', 'Lỗi kết nối'); }
@@ -148,7 +163,10 @@ export default function ReturnScreen() {
       formData.append('failure', JSON.stringify({ reason: failReason, detail: failNote, operatorNote: failNote, evidenceUrls: [] }));
       appendImages(formData, failImages);
       const res = await ApiFailReturn(attempt.id, formData);
-      if (res?.success) Alert.alert('Thành công', 'Đã ghi nhận thu hồi thất bại.', [{ text: 'OK', onPress: () => router.back() }]);
+      if (res?.success || res?.status === 'FAILED' || res?.message?.toLowerCase()?.includes('thành công')) {
+        Alert.alert('Thành công', 'Đã ghi nhận thu hồi thất bại.', [{ text: 'OK', onPress: () => router.back() }]);
+        load();
+      }
       else Alert.alert('Lỗi', res?.message || 'Không thể ghi nhận thất bại');
     } catch { Alert.alert('Lỗi', 'Lỗi kết nối'); }
     finally { setWorking(false); }
@@ -165,7 +183,7 @@ export default function ReturnScreen() {
   };
 
   const snap = record?.prefetchedSnapshot;
-  const rentalItems = snap?.items || [];
+  const rentalItems = rental?.rentalItems || snap?.items || [];
   const deliveryOperatorNote = deliveryRef?.inspection?.operatorNote?.trim() || deliveryRef?.customerConfirmation?.operatorNote?.trim() || '';
   const deliveryImages: string[] = (() => { const src = deliveryRef?.customerConfirmation?.signatureUrls || deliveryRef?.customerConfirmation?.signatureUrl || []; return Array.isArray(src) ? src.filter(Boolean) : [src].filter(Boolean); })();
   const isFinal = ['COMPLETED', 'FAILED', 'VOID', 'ISSUE_REPORTED'].includes(record?.status);
@@ -226,18 +244,18 @@ export default function ReturnScreen() {
             <Text style={s.sectionTitle}>Danh sách thiết bị giao ({rentalItems.length})</Text>
             <View style={s.deviceList}>
               {rentalItems.map((item: any, i: number) => {
-                const serials = item.deviceItemIds?.map((di: any) => di.serialNumber).filter(Boolean) || item.deliveredSerialNumbers || [];
+                const serials = item.expectedSerialNumbers || item.deviceItemIds?.map((di: any) => di.serialNumber).filter(Boolean) || item.deliveredSerialNumbers || [];
                 return (
                   <View key={i} style={s.deviceItem}>
                     <View style={s.deviceInfo}>
                       <Ionicons name="cube-outline" size={20} color="#94A3B8" />
                       <View style={{ flex: 1 }}>
-                        <Text style={s.deviceName}>{item.deviceId?.name || item.name || 'Thiết bị'}</Text>
+                        <Text style={s.deviceName}>{item.deviceName || item.deviceId?.name || item.name || 'Thiết bị'}</Text>
                         {serials.length > 0 && <Text style={s.deviceSerial}>Serial: {serials.join(', ')}</Text>}
                       </View>
                     </View>
                     <View style={s.deviceQtyBox}>
-                      <Text style={s.deviceQty}>x{item.quantity || 1}</Text>
+                      <Text style={s.deviceQty}>x{item.expectedQuantity || item.quantity || 1}</Text>
                     </View>
                   </View>
                 );
@@ -319,9 +337,57 @@ export default function ReturnScreen() {
             )}
           </>
         )}
+
+        {/* Lịch sử Attempts */}
+        <View style={{ marginTop: 30 }}>
+          <Text style={s.sectionTitle}>Lịch sử hoạt động (Attempts)</Text>
+          {attempts.length === 0 ? (
+            <Text style={{ color: '#94A3B8', fontSize: 13 }}>Chưa có biên bản nào.</Text>
+          ) : (
+            <View style={{ gap: 10 }}>
+              {attempts.map((att: any) => (
+                <View key={att.id} style={[s.attemptCard, att.failure?.reason && { borderColor: 'rgba(239, 68, 68, 0.3)', backgroundColor: 'rgba(239, 68, 68, 0.05)' }]}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={s.attemptTitle}>Attempt #{att.attemptNo || '?'}</Text>
+                    <View style={[s.statusBadge, { backgroundColor: getStatusColor(att.status) }]}>
+                      <Text style={s.statusBadgeText}>{att.status}</Text>
+                    </View>
+                  </View>
+                  <Text style={s.attemptSub}>
+                    Kết quả: <Text style={{ color: '#F1F5F9' }}>{att.result || '-'}</Text>
+                  </Text>
+                  {att.failure?.reason && (
+                    <Text style={s.attemptSub}>
+                      Lý do: <Text style={{ color: '#EF4444' }}>{formatReason(att.failure.reason)}</Text>
+                    </Text>
+                  )}
+                  {att.failure?.operatorNote && (
+                    <Text style={[s.attemptSub, { marginTop: 4, fontStyle: 'italic' }]}>
+                      Ghi chú: {att.failure.operatorNote}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
       </ScrollView>
     </View>
   );
+}
+
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'COMPLETED': return '#10B981';
+    case 'FAILED': return '#EF4444';
+    case 'IN_PROGRESS': return '#3B82F6';
+    default: return '#64748B';
+  }
+}
+
+function formatReason(reason: string) {
+  const found = RETURN_FAIL_REASONS.find(r => r.value === reason);
+  return found ? found.label : reason;
 }
 
 function ImageRow({ images, onAdd, onRemove }: { images: string[]; onAdd: () => void; onRemove: (i: number) => void }) {
@@ -385,4 +451,9 @@ const s = StyleSheet.create({
   chipActive: { backgroundColor: 'rgba(239,68,68,0.25)', borderColor: '#EF4444' },
   chipText: { color: '#94A3B8', fontSize: 12 },
   chipTextActive: { color: '#EF4444', fontWeight: '700' },
+  attemptCard: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  attemptTitle: { color: '#FFF', fontWeight: '700', fontSize: 14 },
+  attemptSub: { color: '#94A3B8', fontSize: 13, marginTop: 2 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  statusBadgeText: { color: '#FFF', fontSize: 10, fontWeight: '700' },
 });

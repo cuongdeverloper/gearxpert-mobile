@@ -149,11 +149,6 @@ export const SignIn = () => {
       <View style={styles.content}>
         {/* Header / Logo */}
         <View style={styles.header}>
-          <Image
-            source={require("../../../../assets/images/logoGearXpert.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to your GearXpert account</Text>
         </View>
@@ -274,11 +269,6 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 40,
-  },
-  logo: {
-    width: 200,
-    height: 60,
-    marginBottom: 24,
   },
   title: {
     fontSize: 28,

@@ -46,6 +46,7 @@ export default function HandoverScreen() {
   const { id: rentalId, taskId } = useLocalSearchParams<{ id: string; taskId?: string }>();
 
   const [record, setRecord] = useState<any>(null);
+  const [attempts, setAttempts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [mode, setMode] = useState<'SUCCESS' | 'FAILED'>('SUCCESS');
@@ -91,12 +92,16 @@ export default function HandoverScreen() {
   const resolveAttempt = useCallback(async () => {
     let listRes = await ApiGetHandoverByRental(rentalId);
     let handovers: any[] = listRes?.handovers || [];
+    setAttempts(handovers);
     let active = handovers.find((x: any) => ['DRAFT', 'IN_PROGRESS'].includes(x.status));
 
     if (!active) {
       const dr = await ApiCreateHandoverDraft(rentalId, taskId);
       if (!dr?.success) return null;
       active = dr.handover;
+      // Re-fetch to include the newly created draft
+      listRes = await ApiGetHandoverByRental(rentalId);
+      setAttempts(listRes?.handovers || []);
     }
     // Auto-start nếu DRAFT (giống ensureStartedAttempt bên web)
     if (active?.status === 'DRAFT') {
@@ -340,6 +345,31 @@ export default function HandoverScreen() {
                 : <Text style={s.btnText}>Lưu kiểm tra</Text>}
             </TouchableOpacity>
 
+            {/* Device Checklist */}
+            <Text style={[s.sectionTitle, { marginTop: 20 }]}>Danh sách thiết bị giao</Text>
+            <View style={s.deviceList}>
+              {(snap?.items || []).map((item: any, i: number) => {
+                const serials = item.expectedSerialNumbers || [];
+                return (
+                  <View key={i} style={s.deviceItem}>
+                    <View style={s.deviceInfo}>
+                      <Ionicons name="cube-outline" size={20} color="#94A3B8" />
+                      <View style={{ flex: 1 }}>
+                        <Text style={s.deviceName}>{item.deviceName || 'Thiết bị'}</Text>
+                        {serials.length > 0 && <Text style={s.deviceSerial}>Serial: {serials.join(', ')}</Text>}
+                      </View>
+                    </View>
+                    <View style={s.deviceQtyBox}>
+                      <Text style={s.deviceQty}>x{item.expectedQuantity || 1}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+              {(!snap?.items || snap?.items.length === 0) && (
+                <Text style={{ color: '#94A3B8', fontSize: 13, padding: 12 }}>Không có dữ liệu thiết bị.</Text>
+              )}
+            </View>
+
             {/* ── SUCCESS / FAIL toggle ── */}
             <View style={s.toggleRow}>
               <TouchableOpacity
@@ -427,9 +457,57 @@ export default function HandoverScreen() {
             )}
           </>
         )}
+
+        {/* Lịch sử Attempts */}
+        <View style={{ marginTop: 30 }}>
+          <Text style={s.sectionTitle}>Lịch sử hoạt động (Attempts)</Text>
+          {attempts.length === 0 ? (
+            <Text style={{ color: '#94A3B8', fontSize: 13 }}>Chưa có biên bản nào.</Text>
+          ) : (
+            <View style={{ gap: 10 }}>
+              {attempts.map((att: any) => (
+                <View key={att.id} style={[s.attemptCard, att.failure?.reason && { borderColor: 'rgba(239, 68, 68, 0.3)', backgroundColor: 'rgba(239, 68, 68, 0.05)' }]}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={s.attemptTitle}>Attempt #{att.attemptNo || '?'}</Text>
+                    <View style={[s.statusBadge, { backgroundColor: getStatusColor(att.status) }]}>
+                      <Text style={s.statusBadgeText}>{att.status}</Text>
+                    </View>
+                  </View>
+                  <Text style={s.attemptSub}>
+                    Kết quả: <Text style={{ color: '#F1F5F9' }}>{att.result || '-'}</Text>
+                  </Text>
+                  {att.failure?.reason && (
+                    <Text style={s.attemptSub}>
+                      Lý do: <Text style={{ color: '#EF4444' }}>{formatReason(att.failure.reason)}</Text>
+                    </Text>
+                  )}
+                  {att.failure?.operatorNote && (
+                    <Text style={[s.attemptSub, { marginTop: 4, fontStyle: 'italic' }]}>
+                      Ghi chú: {att.failure.operatorNote}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
       </ScrollView>
     </View>
   );
+}
+
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'COMPLETED': return '#10B981';
+    case 'FAILED': return '#EF4444';
+    case 'IN_PROGRESS': return '#3B82F6';
+    default: return '#64748B';
+  }
+}
+
+function formatReason(reason: string) {
+  const found = FAIL_REASONS.find(r => r.value === reason);
+  return found ? found.label : reason;
 }
 
 function ImageRow({ images, onAdd, onRemove }: { images: string[]; onAdd: () => void; onRemove: (i: number) => void }) {
@@ -489,4 +567,16 @@ const s = StyleSheet.create({
   chipActive: { backgroundColor: 'rgba(239,68,68,0.25)', borderColor: '#EF4444' },
   chipText: { color: '#94A3B8', fontSize: 13 },
   chipTextActive: { color: '#EF4444', fontWeight: '700' },
+  deviceList: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginBottom: 20 },
+  deviceItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  deviceInfo: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  deviceName: { color: '#F8FAFC', fontSize: 14, fontWeight: '600' },
+  deviceSerial: { color: '#94A3B8', fontSize: 12, marginTop: 2 },
+  deviceQtyBox: { backgroundColor: 'rgba(34, 211, 238, 0.15)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.3)' },
+  deviceQty: { color: '#22D3EE', fontWeight: 'bold', fontSize: 13 },
+  attemptCard: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  attemptTitle: { color: '#FFF', fontWeight: '700', fontSize: 14 },
+  attemptSub: { color: '#94A3B8', fontSize: 13, marginTop: 2 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  statusBadgeText: { color: '#FFF', fontSize: 10, fontWeight: '700' },
 });

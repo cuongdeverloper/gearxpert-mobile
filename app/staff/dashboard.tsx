@@ -16,12 +16,8 @@ export default function StaffDashboard() {
     <View style={styles.container}>
       <LinearGradient colors={['#0F172A', '#1E1B4B']} style={StyleSheet.absoluteFillObject} />
       
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#F8FAFC" />
-        </TouchableOpacity>
+      <View style={[styles.header, { paddingTop: insets.top + 10, justifyContent: 'center' }]}>
         <Text style={styles.headerTitle}>Bảng điều khiển Nhân viên</Text>
-        <View style={{ width: 24 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -61,14 +57,14 @@ export default function StaffDashboard() {
         
         <TouchableOpacity 
           style={styles.actionRow}
-          onPress={() => router.push('/staff/report-issue')}
+          onPress={() => router.push('/staff/activity-history')}
         >
           <BlurView intensity={20} tint="dark" style={styles.actionRowInner}>
             <View style={styles.actionRowLeft}>
-              <View style={[styles.iconBoxSmall, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
-                <Ionicons name="warning-outline" size={20} color="#EF4444" />
+              <View style={[styles.iconBoxSmall, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
+                <Ionicons name="time-outline" size={20} color="#10B981" />
               </View>
-              <Text style={styles.actionRowText}>Báo cáo sự cố</Text>
+              <Text style={styles.actionRowText}>Lịch sử hoạt động</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#64748B" />
           </BlurView>

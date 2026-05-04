@@ -188,5 +188,61 @@ export const profileStyles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.05)',
     marginLeft: 68,
-  }
+  },
+  // Edit Form Styles
+  editForm: {
+    paddingHorizontal: 24,
+    marginTop: 20,
+    gap: 12,
+  },
+  inputGroup: {
+    gap: 6,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginLeft: 4,
+  },
+  input: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: '#F8FAFC',
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  rowInputs: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  saveButton: {
+    backgroundColor: '#22D3EE',
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 20,
+    shadowColor: '#22D3EE',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  saveButtonText: {
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    fontWeight: '500',
+  },
 });
+

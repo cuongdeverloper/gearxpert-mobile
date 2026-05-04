@@ -89,7 +89,7 @@ export const ApiConfirmHandoverSuccess = async (handoverId: string, formData: Fo
   try {
     const config = await getAuthHeaders();
     const response = await axios.post(`${BASE_URL}/handovers/${handoverId}/confirm-success`, formData, {
-      headers: { ...config.headers, 'Content-Type': 'multipart/form-data' },
+      headers: { ...config.headers },
     });
     return response.data;
   } catch (error: any) {
@@ -101,7 +101,7 @@ export const ApiFailHandover = async (handoverId: string, formData: FormData) =>
   try {
     const config = await getAuthHeaders();
     const response = await axios.post(`${BASE_URL}/handovers/${handoverId}/fail`, formData, {
-      headers: { ...config.headers, 'Content-Type': 'multipart/form-data' },
+      headers: { ...config.headers },
     });
     return response.data;
   } catch (error: any) {
@@ -154,7 +154,7 @@ export const ApiConfirmReturnSuccess = async (returnRecordId: string, formData: 
   try {
     const config = await getAuthHeaders();
     const response = await axios.post(`${BASE_URL}/returns/${returnRecordId}/confirm-success`, formData, {
-      headers: { ...config.headers, 'Content-Type': 'multipart/form-data' },
+      headers: { ...config.headers },
     });
     return response.data;
   } catch (error: any) {
@@ -167,7 +167,7 @@ export const ApiConfirmReturnByRental = async (rentalId: string, formData: FormD
   try {
     const config = await getAuthHeaders();
     const response = await axios.post(`${BASE_URL}/rentals/${rentalId}/confirm-return`, formData, {
-      headers: { ...config.headers, 'Content-Type': 'multipart/form-data' },
+      headers: { ...config.headers },
     });
     return response.data;
   } catch (error: any) {
@@ -189,7 +189,7 @@ export const ApiFailReturn = async (returnRecordId: string, formData: FormData) 
   try {
     const config = await getAuthHeaders();
     const response = await axios.post(`${BASE_URL}/returns/${returnRecordId}/fail`, formData, {
-      headers: { ...config.headers, 'Content-Type': 'multipart/form-data' },
+      headers: { ...config.headers },
     });
     return response.data;
   } catch (error: any) {
@@ -203,7 +203,20 @@ export const ApiReportStaffIssue = async (type: 'delivery' | 'return', formData:
     const config = await getAuthHeaders();
     const endpoint = type === 'delivery' ? '/reports/staff-delivery-issue' : '/reports/staff-return-issue';
     const response = await axios.post(`${BASE_URL}${endpoint}`, formData, {
-      headers: { ...config.headers, 'Content-Type': 'multipart/form-data' },
+      headers: { ...config.headers },
+    });
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { errorCode: -1, message: "Lỗi mạng" };
+  }
+};
+// --- Operation Logs ---
+export const ApiGetMyOperationLogs = async (page = 1, limit = 50) => {
+  try {
+    const config = await getAuthHeaders();
+    const response = await axios.get(`${BASE_URL}/operation-logs/my`, {
+      ...config,
+      params: { page, limit }
     });
     return response.data;
   } catch (error: any) {
