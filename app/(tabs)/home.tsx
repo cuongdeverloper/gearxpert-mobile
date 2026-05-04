@@ -117,7 +117,11 @@ export default function Homepage() {
         </View>
 
         {/* MODERN SEARCH BAR */}
-        <View style={styles.searchSection}>
+        <TouchableOpacity 
+          style={styles.searchSection} 
+          activeOpacity={0.9}
+          onPress={() => router.push({ pathname: '/(tabs)/products', params: { autoFocusSearch: 'true' } })}
+        >
           <View style={styles.searchBar}>
             <Ionicons name="search" size={22} color="#94A3B8" />
             <Text style={styles.searchPlaceholder}>Search for drones, cameras...</Text>
@@ -125,25 +129,38 @@ export default function Homepage() {
               <Ionicons name="options-outline" size={18} color="#FFF" />
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
-        {/* HERO BANNER - Soft, rounded, immersive */}
-        <View style={styles.heroSection}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1542496658-e32689368832?q=80&w=800&auto=format&fit=crop' }}
-            style={styles.heroImage}
-          />
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.8)']}
-            style={styles.heroGradient}
-          />
-          <View style={styles.heroContent}>
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>WEEKEND PROMO</Text>
-            </View>
-            <Text style={styles.heroTitle}>Level up your content.</Text>
-            <Text style={styles.heroSubtitle}>Get 20% off all Sony lenses</Text>
-          </View>
+        {/* SMART GEAR AI BANNER */}
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity 
+            style={styles.smartGearCard}
+            onPress={() => router.push('/smart-gear')}
+            activeOpacity={0.9}
+          >
+            <LinearGradient
+              colors={['#1E293B', '#0F172A']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.smartGearGradient}
+            >
+              <View style={styles.smartGearContent}>
+                <View style={styles.smartGearBadge}>
+                  <Ionicons name="sparkles" size={12} color="#FFF" />
+                  <Text style={styles.smartGearBadgeText}>AI POWERED</Text>
+                </View>
+                <Text style={styles.smartGearTitle}>SmartGear AI Assistant</Text>
+                <Text style={styles.smartGearSubtitle}>Get personalized gear recommendations based on your creative needs.</Text>
+                <View style={styles.smartGearAction}>
+                  <Text style={styles.smartGearActionText}>Try it now</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#22D3EE" />
+                </View>
+              </View>
+              <View style={styles.smartGearIconBox}>
+                <Ionicons name="hardware-chip-outline" size={60} color="rgba(34, 211, 238, 0.2)" />
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         {/* PILL CATEGORIES */}
@@ -199,6 +216,25 @@ export default function Homepage() {
           ))}
         </ScrollView>
 
+        {/* HERO BANNER - Weekend Promo */}
+        <View style={styles.heroSection}>
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1542496658-e32689368832?q=80&w=800&auto=format&fit=crop' }}
+            style={styles.heroImage}
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.8)']}
+            style={styles.heroGradient}
+          />
+          <View style={styles.heroContent}>
+            <View style={styles.heroBadge}>
+              <Text style={styles.heroBadgeText}>WEEKEND PROMO</Text>
+            </View>
+            <Text style={styles.heroTitle}>Level up your content.</Text>
+            <Text style={styles.heroSubtitle}>Get 20% off all Sony lenses</Text>
+          </View>
+        </View>
+
         {/* CURATED KITS */}
         <View style={[styles.sectionContainer, styles.rowBetween, { marginTop: 30 }]}>
           <Text style={styles.sectionTitle}>Curated Kits</Text>
@@ -223,7 +259,7 @@ export default function Homepage() {
       {/* BOTTOM NAV */}
       <BottomNav activeTab="home" />
       {/* Profile Dropdown Modal */}
-      
+
       <Modal visible={showDropdown} transparent={true} animationType="fade">
         <TouchableOpacity
           style={styles.modalOverlay}
@@ -278,7 +314,7 @@ export default function Homepage() {
                 style={styles.walletCard}
                 onPress={() => {
                   setShowDropdown(false);
-                   router.push('/(tabs)/wallet' as any);
+                  router.push('/(tabs)/wallet' as any);
                 }}
               >
                 <View style={styles.walletHeader}>

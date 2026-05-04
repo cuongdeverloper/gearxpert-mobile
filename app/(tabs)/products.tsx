@@ -1,8 +1,8 @@
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   StyleSheet, Text, TouchableOpacity, View, ScrollView, Image,
-  Platform, Dimensions, StatusBar, ActivityIndicator, TextInput, FlatList
+  Platform, Dimensions, StatusBar, ActivityIndicator, TextInput, FlatList, Keyboard
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,7 +46,8 @@ export default function ProductsScreen() {
   const [showSortPicker, setShowSortPicker] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const { favoriteIds, toggleFavorite, refreshFavorites } = useFavorites();
-  const params = useLocalSearchParams<{ category?: string }>();
+  const params = useLocalSearchParams<{ category?: string; autoFocusSearch?: string }>();
+  const searchInputRef = useRef<TextInput>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -61,6 +62,7 @@ export default function ProductsScreen() {
       } else {
         setSelectedCategory(params.category);
       }
+      Keyboard.dismiss();
     }
   }, [params.category]);
 
@@ -79,6 +81,16 @@ export default function ProductsScreen() {
     };
     load();
   }, []);
+
+  // Handle auto-focus from Home search bar
+  useEffect(() => {
+    if (params.autoFocusSearch === 'true') {
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [params.autoFocusSearch]);
 
   // Apply filters + sort
   useEffect(() => {
@@ -178,6 +190,7 @@ export default function ProductsScreen() {
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color="#64748B" />
           <TextInput
+            ref={searchInputRef}
             style={styles.searchInput}
             placeholder="Search cameras, drones, audio..."
             placeholderTextColor="#475569"
@@ -248,7 +261,10 @@ export default function ProductsScreen() {
             <TouchableOpacity
               key={cat.name}
               style={[styles.catPill, selectedCategory === cat.id && styles.catPillActive]}
-              onPress={() => setSelectedCategory(cat.id)}
+              onPress={() => {
+                setSelectedCategory(cat.id);
+                Keyboard.dismiss();
+              }}
             >
               <Ionicons
                 name={cat.icon as any}

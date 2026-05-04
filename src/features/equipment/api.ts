@@ -66,3 +66,12 @@ export const ApiGetRelatedDevices = async (id: string) => {
     return error.response?.data || { errorCode: -1, message: "Network error" };
   }
 };
+
+export const ApiGetSmartGearSuggestion = async (prompt: string) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/smartgear/suggest`, { prompt });
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { errorCode: -1, message: "Network error" };
+  }
+};

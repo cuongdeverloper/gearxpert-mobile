@@ -369,5 +369,76 @@ export const homeStyles = StyleSheet.create({
   },
   kitDesc: {
     fontSize: 13, color: 'rgba(255,255,255,0.8)',
+  },
+  // SMART GEAR
+  smartGearCard: {
+    width: '100%',
+    borderRadius: 28,
+    overflow: 'hidden',
+    marginTop: 20,
+    marginBottom: 10,
+    shadowColor: '#22D3EE',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  smartGearGradient: {
+    padding: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  smartGearContent: {
+    flex: 1,
+    zIndex: 2,
+  },
+  smartGearBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(34, 211, 238, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(34, 211, 238, 0.3)',
+  },
+  smartGearBadgeText: {
+    color: '#22D3EE',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  smartGearTitle: {
+    color: '#FFF',
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  smartGearSubtitle: {
+    color: '#94A3B8',
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  smartGearAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  smartGearActionText: {
+    color: '#22D3EE',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  smartGearIconBox: {
+    position: 'absolute',
+    right: -20,
+    bottom: -20,
+    opacity: 0.8,
   }
 });
